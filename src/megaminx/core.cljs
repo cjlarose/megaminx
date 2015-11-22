@@ -26,7 +26,8 @@
   (let [b (/ s 2)
         h (apothem 5 s)
         triangle (fn [i]
-                   [:div {:style {:border-style "solid"
+                   [:div {:key i
+                          :style {:border-style "solid"
                                   :margin-left (str (- b) "em")
                                   :margin-top (str (/ h -2) "em")
                                   :transform (str "rotateZ(" (* i (central-angle 5)) "rad) translateY(" (/ h 2) "em)")
