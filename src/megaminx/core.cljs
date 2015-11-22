@@ -44,24 +44,22 @@
         r-x (- (/ js/Math.PI 2) dihedral-angle)
         r (/ (* s (js/Math.pow phi 3)) (* 2 (js/Math.sqrt (+ (js/Math.pow phi 2) 1))))]
     [:div
-      (str dihedral-angle "rad")
-      ;(regular-pentagon 5 "#000" "")
-      (regular-pentagon s "#0f0" (str "rotateX(90deg) translateZ(" r "em)")) ;; top
+      (regular-pentagon s "#00ff00" (str "rotateX(90deg) translateZ(" r "em)")) ;; top
       (regular-pentagon s "#800080" (str "rotateY(0deg)   rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)"))
-      (regular-pentagon s "#00f" (str "rotateY(72deg)  rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)"))
-      (regular-pentagon s "#ff0" (str "rotateY(144deg) rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)"))
-      (regular-pentagon s "#f00" (str "rotateY(216deg) rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)"))
-      (regular-pentagon s "#fff" (str "rotateY(288deg) rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)"))
+      (regular-pentagon s "#0000ff" (str "rotateY(72deg)  rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)"))
+      (regular-pentagon s "#ffff00" (str "rotateY(144deg) rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)"))
+      (regular-pentagon s "#ff0000" (str "rotateY(216deg) rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)"))
+      (regular-pentagon s "#ffffff" (str "rotateY(288deg) rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)"))
       (regular-pentagon s "#8bc34a" (str "rotateX(-90deg) translateZ(" r "em)")) ;; base
-      (regular-pentagon s "#f60" (str "rotateY(36deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))
-      (regular-pentagon s "#666" (str "rotateY(108deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))
-      (regular-pentagon s "pink" (str "rotateY(180deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))
-      (regular-pentagon s "#00f" (str "rotateY(252deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))
-      (regular-pentagon s "#990" (str "rotateY(324deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))]))
+      (regular-pentagon s "#ff6600" (str "rotateY(36deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))
+      (regular-pentagon s "#666666" (str "rotateY(108deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))
+      (regular-pentagon s "#ffc0cb" (str "rotateY(180deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))
+      (regular-pentagon s "#0000ff" (str "rotateY(252deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))
+      (regular-pentagon s "#999900" (str "rotateY(324deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)"))]))
 
 (defn scene []
   [:div {:style {:transform "rotateX(-30deg)"}}
-    (dodecahedron 5)])
+    (dodecahedron 7.5)])
 
 (reagent/render-component [scene]
                           (. js/document (getElementById "app")))
