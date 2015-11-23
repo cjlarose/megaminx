@@ -22,6 +22,8 @@
   (let [theta (/ js/Math.PI n)]
     (/ s (* 2 (js/Math.sin theta)))))
 
+(def dihedral-angle (- js/Math.PI (js/Math.atan 2)))
+
 (defn regular-pentagon [s color transform]
   (let [b (/ s 2)
         h (apothem 5 s)
@@ -37,10 +39,19 @@
     [:div {:style {:transform transform}}
      (map triangle (range 5))]))
 
+(defn rhomboid [s]
+  (let [skew-x (- dihedral-angle (/ js/Math.PI 2))
+        scale-y (js/Math.cos skew-x)]
+    [:div {:style {:height (str s "em")
+                   :width (str s "em")
+                   :margin-left (str (- (/ s 2)) "em")
+                   :margin-top (str (- (/ s 2)) "em")
+                   :transform (str "skewX(" skew-x "rad) scaleY(" scale-y ")")
+                   :background "#ff6600"}}]))
+
 (defn dodecahedron [s]
   (let [a (apothem 5 s)
         R (circumradius 5 s)
-        dihedral-angle (- js/Math.PI (js/Math.atan 2))
         r-x (- (/ js/Math.PI 2) dihedral-angle)
         r (/ (* s (js/Math.pow phi 3)) (* 2 (js/Math.sqrt (+ (js/Math.pow phi 2) 1))))]
     [:div
@@ -59,7 +70,7 @@
 
 (defn scene []
   [:div {:style {:transform "rotateX(-30deg)"}}
-    (dodecahedron 7.5)])
+   (dodecahedron 7.5)])
 
 (reagent/render-component [scene]
                           (. js/document (getElementById "app")))
