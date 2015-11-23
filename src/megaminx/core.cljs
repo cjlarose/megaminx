@@ -1,5 +1,8 @@
 (ns megaminx.core
-  (:require [reagent.core :as reagent :refer [atom]]))
+  (:require [reagent.core :as reagent :refer [atom]]
+            [megaminx.util :refer [central-angle dihedral-angle circumradius phi apothem]]
+            [megaminx.component :refer [shape]]
+            [megaminx.model :as m]))
 
 (enable-console-print!)
 
@@ -9,35 +12,14 @@
 
 (defonce app-state (atom {:text "Hello world!"}))
 
-(def phi (/ (+ 1 (js/Math.sqrt 5)) 2))
-
-(defn central-angle [n]
-  (/ (* Math.PI 2) n))
-
-(defn apothem [n s]
-  (let [theta (/ js/Math.PI n)]
-    (/ s (* 2 (js/Math.tan theta)))))
-
-(defn circumradius [n s]
-  (let [theta (/ js/Math.PI n)]
-    (/ s (* 2 (js/Math.sin theta)))))
-
-(def dihedral-angle (- js/Math.PI (js/Math.atan 2)))
-
-(defn regular-pentagon [s color transform]
+(defn regular-pentagon [s color]
   (let [b (/ s 2)
-        h (apothem 5 s)
-        triangle (fn [i]
-                   [:div {:key i
-                          :style {:border-style "solid"
-                                  :margin-left (str (- b) "em")
-                                  :margin-top (str (/ h -2) "em")
-                                  :transform (str "rotateZ(" (* i (central-angle 5)) "rad) translateY(" (/ h 2) "em)")
-                                  :border-color (str "transparent transparent " color)
-                                  :opacity 0.5
-                                  :border-width (str "0 " b "em " h "em")}}])]
-    [:div {:style {:transform transform}}
-     (map triangle (range 5))]))
+        h (apothem 5 s)]
+    (apply m/composite-shape
+      (map (fn [i] (->> (m/isosceles-triangle b h color)
+                        (m/rotate-z (* i (central-angle 5)))
+                        (m/translate-y (/ h 2))))
+           (range 5)))))
 
 (defn rhomboid [s]
   (let [skew-x (- dihedral-angle (/ js/Math.PI 2))
@@ -51,26 +33,33 @@
 
 (defn dodecahedron [s]
   (let [a (apothem 5 s)
+        c (central-angle 5)
         R (circumradius 5 s)
         r-x (- (/ js/Math.PI 2) dihedral-angle)
         r (/ (* s (js/Math.pow phi 3)) (* 2 (js/Math.sqrt (+ (js/Math.pow phi 2) 1))))]
-    [:div
-      [regular-pentagon s "#00ff00" (str "rotateX(90deg) translateZ(" r "em)")] ;; top
-      [regular-pentagon s "#800080" (str "rotateY(0deg)   rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)")]
-      [regular-pentagon s "#0000ff" (str "rotateY(72deg)  rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)")]
-      [regular-pentagon s "#ffff00" (str "rotateY(144deg) rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)")]
-      [regular-pentagon s "#ff0000" (str "rotateY(216deg) rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)")]
-      [regular-pentagon s "#ffffff" (str "rotateY(288deg) rotateZ(180deg) rotateX(" r-x "rad) translateZ(" r "em)")]
-      [regular-pentagon s "#8bc34a" (str "rotateX(-90deg) translateZ(" r "em)")] ;; base
-      [regular-pentagon s "#ff6600" (str "rotateY(36deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)")]
-      [regular-pentagon s "#666666" (str "rotateY(108deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)")]
-      [regular-pentagon s "#ffc0cb" (str "rotateY(180deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)")]
-      [regular-pentagon s "#0000ff" (str "rotateY(252deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)")]
-      [regular-pentagon s "#999900" (str "rotateY(324deg)   rotateZ(0deg) rotateX(" r-x "rad) translateZ(" r "em)")]]))
+    (apply m/composite-shape
+      (->> (regular-pentagon s "#00ff00")
+           (m/rotate-x (/ js/Math.PI 2))
+           (m/translate-z r))
+      (->> (regular-pentagon s "#8bc34a")
+           (m/rotate-x (- (/ js/Math.PI 2)))
+           (m/translate-z r))
+      (concat
+        (map-indexed (fn [i color] (->> (regular-pentagon s color)
+                                        (m/rotate-y (* c i))
+                                        (m/rotate-z js/Math.PI)
+                                        (m/rotate-x r-x)
+                                        (m/translate-z r)))
+                     ["#800080" "#0000ff" "#ffff00" "#ff0000" "#ffffff"])
+        (map-indexed (fn [i color] (->> (regular-pentagon s color)
+                                        (m/rotate-y (+ (* c i) (/ c 2)))
+                                        (m/rotate-x r-x)
+                                        (m/translate-z r)))
+                     ["#ff6600" "#666666" "#ffc0cb" "#0000ff" "#999900"])))))
 
 (defn scene []
   [:div {:style {:transform "rotateX(-30deg)"}}
-   (dodecahedron 7.5)])
+   [shape (dodecahedron 7.5)]])
 
 (reagent/render-component [scene]
                           (. js/document (getElementById "app")))
