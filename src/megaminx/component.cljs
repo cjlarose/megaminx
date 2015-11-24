@@ -6,7 +6,7 @@
   [:div {:style (merge {:width (str w "em")
                         :height (str h "em")
                         :margin-left (str (- (/ w 2)) "em")
-                        :margin-top (str (- (/ w 2)) "em")}
+                        :margin-top (str (- (/ h 2)) "em")}
                        styles)}])
 
 (defn isosceles-triangle [{:keys [b h color]} styles]
