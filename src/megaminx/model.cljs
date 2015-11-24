@@ -26,6 +26,17 @@
 (defn rotate-z [angle shape]
   (update shape :transforms conj {:name "rotateZ"
                                   :args [(str angle "rad")]}))
+(defn skew-x [angle shape]
+  (update shape :transforms conj {:name "skewX"
+                                  :args [(str angle "rad")]}))
+
+(defn skew-y [angle shape]
+  (update shape :transforms conj {:name "skewY"
+                                  :args [(str angle "rad")]}))
+
+(defn scale-y [s shape]
+  (update shape :transforms conj {:name "scaleY"
+                                  :args [(str s)]}))
 
 (defn translate-y [t shape]
   (update shape :transforms conj {:name "translateY"

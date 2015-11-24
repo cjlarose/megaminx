@@ -21,16 +21,6 @@
                         (m/translate-y (/ h 2))))
            (range 5)))))
 
-(defn rhomboid [s]
-  (let [skew-x (- dihedral-angle (/ js/Math.PI 2))
-        scale-y (js/Math.cos skew-x)]
-    [:div {:style {:height (str s "em")
-                   :width (str s "em")
-                   :margin-left (str (- (/ s 2)) "em")
-                   :margin-top (str (- (/ s 2)) "em")
-                   :transform (str "skewX(" skew-x "rad) scaleY(" scale-y ")")
-                   :background "#ff6600"}}]))
-
 (defn dodecahedron [s]
   (let [a (apothem 5 s)
         c (central-angle 5)
@@ -57,9 +47,35 @@
                                         (m/translate-z r)))
                      ["#ff6600" "#666666" "#ffc0cb" "#0000ff" "#999900"])))))
 
+(defn rhombohedron [s]
+  (->> (m/composite-shape
+         (->> (m/square s {:background-color "#000000"})
+              (m/rotate-x (/ js/Math.PI 2))
+              (m/translate-z (/ s 2)))
+         (->> (m/square s {:background-color "#000000"})
+              (m/rotate-x (- (/ js/Math.PI 2)))
+              (m/translate-z (/ s 2)))
+         (->> (m/square s {:background-color "#000000"})
+              (m/rotate-y 0)
+              ; (m/skew-x (- dihedral-angle (/ js/Math.PI 2)))
+              (m/translate-z (/ s 2)))
+         (->> (m/square s {:background-color "#ff6600"})
+              (m/rotate-y (/ js/Math.PI 2))
+              (m/translate-z (/ s 2)))
+         (->> (m/square s {:background-color "#ff00ff"})
+              (m/rotate-y js/Math.PI)
+              ; (m/skew-x (- dihedral-angle (/ js/Math.PI 2)))
+              (m/translate-z (/ s 2)))
+         (->> (m/square s {:background-color "#ff0000"})
+              (m/rotate-y (* js/Math.PI (/ 3 2)))
+              (m/translate-z (/ s 2))))
+       (m/skew-x (- dihedral-angle (/ js/Math.PI 2)))
+       (m/scale-y (js/Math.cos (- dihedral-angle (/ js/Math.PI 2))))))
+
 (defn scene []
   [:div {:style {:transform "rotateX(-30deg)"}}
-   [shape (dodecahedron 7.5)]])
+   [shape (dodecahedron 7.5)]
+   [shape (rhombohedron 7.5)]])
 
 (reagent/render-component [scene]
                           (. js/document (getElementById "app")))
