@@ -74,11 +74,23 @@
        (m/scale-y (js/Math.cos (- dihedral-angle (/ js/Math.PI 2))))))
 
 (defn scene []
-  [:div {:id "scene"
-         :on-click #(js/console.log "hello")}
-   [:div {:style {:transform "rotateX(-30deg)"}}
-    [shape (dodecahedron 7.5)]
-    [shape (rhombohedron 7.5)]]])
+  (let [rotate (atom {:x (- (/ js/Math.PI 6)) :y 0})
+        start-pos (atom nil)
+        record-pos (fn [e] (reset! start-pos [[(.-pageX e) (.-pageY e)] @rotate]))
+        update-rotate (fn [e] (if @start-pos
+                                (let [current-pos   [(.-pageX e) (.-pageY e)]
+                                      [dx dy]       (map - (first @start-pos) current-pos)
+                                      {:keys [x y]} (second @start-pos)]
+                                  (reset! rotate {:y (+ y (* dx 0.001)) :x (+ x (* dy 0.001))}))))
+        clear-pos #(reset! start-pos nil)]
+    (fn []
+      [:div {:id "scene"
+             :on-mouse-down record-pos
+             :on-mouse-move update-rotate
+             :on-mouse-up clear-pos}
+       [:div {:style {:transform (str "rotateX(" (:x @rotate) "rad) rotateY(" (:y @rotate) "rad)")}}
+        [shape (dodecahedron 7.5)]
+        [shape (rhombohedron 7.5)]]])))
 
 (reagent/render-component [scene]
                           (. js/document (getElementById "app")))
