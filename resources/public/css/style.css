@@ -1,15 +1,23 @@
 /* some style */
-#app {
-    perspective: 40em;
+html, body {
+    margin: 0;
+}
+
+body {
+    font-size: 16px;
+}
+
+#scene {
     background: #e6e6e6;
     position: absolute;
     top: 0;
-    right: 0;
-    bottom: 0;
     left: 0;
+    bottom: 0;
+    right: 0;
+    perspective: 40em;
 }
 
-#app * {
+#scene * {
     position: absolute;
     top: 50%;
     left: 50%;

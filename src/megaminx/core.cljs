@@ -10,7 +10,8 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (atom {:text "Hello world!"}))
+(defonce app-state (atom {:rotate-y "Hello world!"
+                          :rotate-x ""}))
 
 (defn regular-pentagon [s color]
   (let [b (/ s 2)
@@ -73,9 +74,11 @@
        (m/scale-y (js/Math.cos (- dihedral-angle (/ js/Math.PI 2))))))
 
 (defn scene []
-  [:div {:style {:transform "rotateX(-30deg)"}}
-   [shape (dodecahedron 7.5)]
-   [shape (rhombohedron 7.5)]])
+  [:div {:id "scene"
+         :on-click #(js/console.log "hello")}
+   [:div {:style {:transform "rotateX(-30deg)"}}
+    [shape (dodecahedron 7.5)]
+    [shape (rhombohedron 7.5)]]])
 
 (reagent/render-component [scene]
                           (. js/document (getElementById "app")))
