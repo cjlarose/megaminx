@@ -38,6 +38,14 @@
   (update shape :transforms conj {:name "scaleY"
                                   :args [(str s)]}))
 
+(defn scale-z [s shape]
+  (update shape :transforms conj {:name "scaleZ"
+                                  :args [(str s)]}))
+
+(defn scale-3d [x y z shape]
+  (update shape :transforms conj {:name "scale3d"
+                                  :args [(str x "," y "," z)]}))
+
 (defn translate-y [t shape]
   (update shape :transforms conj {:name "translateY"
                                   :args [(str t "em")]}))
