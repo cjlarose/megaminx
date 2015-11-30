@@ -5,6 +5,7 @@
                                    dihedral-angle
                                    circumradius
                                    phi
+                                   hypotenuse
                                    apothem]]
             [megaminx.component :refer [transform] :as component]
             [megaminx.model :as m]))
@@ -28,6 +29,25 @@
                      (component/isosceles-triangle {:b s :h h :color color} {})]
                     {:key i}))
           (range 5))]))
+
+(defn pentagonal-pyramid [s h color]
+  (let [c (central-angle 5)
+        a (apothem 5 s)
+        lateral-height (hypotenuse a h)
+        base-angle (js/Math.atan (/ h a))]
+    [:div
+     [transform
+      [(m/rotate-x (- (/ js/Math.PI 2)))
+       (m/translate-z (/ h 2))]
+      [regular-pentagon s color]]
+     (map-indexed (fn [i] (with-meta
+                            [transform
+                             [(m/rotate-y (+ (* i c) (/ c 2)))
+                              (m/translate-z (/ a 2))
+                              (m/rotate-x (- (/ js/Math.PI 2) base-angle))]
+                             [component/isosceles-triangle {:b s :h lateral-height :color color} {}]]
+                            {:key i}))
+                  (range 5))]))
 
 (defn dodecahedron [s]
   (let [a (apothem 5 s)
