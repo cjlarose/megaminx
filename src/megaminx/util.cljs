@@ -17,3 +17,6 @@
     (/ s (* 2 (js/Math.sin theta)))))
 
 (def dihedral-angle (- js/Math.PI (js/Math.atan 2)))
+
+(defn hypotenuse [a b]
+  (js/Math.sqrt (+ (* a a) (* b b))))
