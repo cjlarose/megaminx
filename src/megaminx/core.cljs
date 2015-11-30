@@ -6,7 +6,7 @@
                                    circumradius
                                    phi
                                    apothem]]
-            [megaminx.component :refer [shape]]
+            [megaminx.component :refer [transform] :as component]
             [megaminx.model :as m]))
 
 (enable-console-print!)
@@ -21,11 +21,14 @@
 (defn regular-pentagon [s color]
   (let [b (/ s 2)
         h (apothem 5 s)]
-    (apply m/composite-shape
-      (map (fn [i] (->> (m/isosceles-triangle b h color)
-                        (m/rotate-z (* i (central-angle 5)))
-                        (m/translate-y (/ h 2))))
-           (range 5)))))
+    [:div
+     (map (fn [i] (with-meta
+                    [transform
+                     [(m/rotate-z (* i (central-angle 5)))
+                      (m/translate-y (/ h 2))]
+                     (component/isosceles-triangle {:b b :h h :color color} {})]
+                    {:key i}))
+          (range 5))]))
 
 (defn dodecahedron [s]
   (let [a (apothem 5 s)
@@ -33,62 +36,69 @@
         R (circumradius 5 s)
         r-x (- (/ js/Math.PI 2) dihedral-angle)
         r (/ (* s (js/Math.pow phi 3)) (* 2 (js/Math.sqrt (+ (js/Math.pow phi 2) 1))))]
-    (apply m/composite-shape
-      (->> (regular-pentagon s "#00ff00")
-           (m/rotate-x (/ js/Math.PI 2))
-           (m/translate-z r))
-      (->> (regular-pentagon s "#8bc34a")
-           (m/rotate-x (- (/ js/Math.PI 2)))
-           (m/translate-z r))
-      (concat
-        (map-indexed (fn [i color] (->> (regular-pentagon s color)
-                                        (m/rotate-y (* c i))
-                                        (m/rotate-z js/Math.PI)
-                                        (m/rotate-x r-x)
-                                        (m/translate-z r)))
-                     ["#800080" "#0000ff" "#ffff00" "#ff0000" "#ffffff"])
-        (map-indexed (fn [i color] (->> (regular-pentagon s color)
-                                        (m/rotate-y (+ (* c i) (/ c 2)))
-                                        (m/rotate-x r-x)
-                                        (m/translate-z r)))
-                     ["#ff6600" "#666666" "#ffc0cb" "#0000ff" "#999900"])))))
+    [:div
+     [transform
+       [(m/rotate-x (/ js/Math.PI 2))
+        (m/translate-z r)]
+       [regular-pentagon s "#00ff00"]]
+     [transform
+       [(m/rotate-x (- (/ js/Math.PI 2)))
+        (m/translate-z r)]
+       [regular-pentagon s "#8bc34a"]]
+     (map-indexed (fn [i color] (with-meta
+                                  [transform
+                                   [(m/rotate-y (* c i))
+                                    (m/rotate-z js/Math.PI)
+                                    (m/rotate-x r-x)
+                                    (m/translate-z r)]
+                                   [regular-pentagon s color]]
+                                  {:key (+ i 2)}))
+                  ["#800080" "#0000ff" "#ffff00" "#ff0000" "#ffffff"])
+     (map-indexed (fn [i color] (with-meta
+                                  [transform
+                                   [(m/rotate-y (+ (* c i) (/ c 2)))
+                                    (m/rotate-x r-x)
+                                    (m/translate-z r)]
+                                   [regular-pentagon s color]]
+                                  {:key (+ i 7)}))
+                  ["#ff6600" "#666666" "#ffc0cb" "#0000ff" "#999900"])]))
 
-(defn rhombohedron [s]
-  (let [alpha (/ js/Math.PI 10) ;(- (interior-angle 5) (/ js/Math.PI 2))
-        translate 5.0]; (/ s 2)]
-        ; alpha (* (/ 1 5) js/Math.PI)]
-    (->> (m/composite-shape
-           ; (->> (m/square s {:background-color "#0000ff" :opacity 0.5}) ;;top
-           ;      (m/rotate-x (/ js/Math.PI 2))
-           ;      (m/translate-z (/ s 2)))
-           ; (->> (m/square s {:background-color "#999999" :opacity 0.5}) ;; base
-           ;      (m/rotate-x (- (/ js/Math.PI 2)))
-           ;      (m/translate-z (/ s 2)))
-           (->> (m/square s {:background-color "#006699" :opacity 0.5}) ;;front
-                (m/skew-x (- alpha))
-                (m/scale-y (js/Math.cos (- alpha)))
-                (m/rotate-y 0)
-                (m/translate-z translate)
-                (m/rotate-x (- (- (/ js/Math.PI 2) dihedral-angle))))
-           ; (->> (m/square s {:background-color "#ff6600" :opacity 0.5}) ;;right
-           ;      (m/skew-x alpha)
-           ;      (m/scale-y (js/Math.cos alpha))
-           ;      (m/rotate-y (/ js/Math.PI 2))
-           ;      (m/translate-z (/ s 2)))
-           ; (->> (m/square s {:background-color "#ff00ff" :opacity 0.5}) ;;back
-           ;      (m/skew-x alpha)
-           ;      (m/scale-y (js/Math.cos alpha))
-           ;      (m/rotate-y js/Math.PI)
-           ;      ; (m/skew-x (- dihedral-angle (/ js/Math.PI 2)))
-           ;      (m/translate-z (/ s 2)))
-           (->> (m/square s {:background-color "#00ff00" :opacity 0.5}) ;; left
-                (m/rotate-y (- (central-angle 5)))
-                (m/skew-x alpha)
-                (m/scale-y (js/Math.cos alpha))
-                (m/translate-z translate)
-                (m/rotate-x (- (- (/ js/Math.PI 2) dihedral-angle)))))
-         (m/translate-z 7)
-         (m/translate-y -7.0))))
+; (defn rhombohedron [s]
+;   (let [alpha (/ js/Math.PI 10) ;(- (interior-angle 5) (/ js/Math.PI 2))
+;         translate 5.0]; (/ s 2)]
+;         ; alpha (* (/ 1 5) js/Math.PI)]
+;     (->> (m/composite-shape
+;            ; (->> (m/square s {:background-color "#0000ff" :opacity 0.5}) ;;top
+;            ;      (m/rotate-x (/ js/Math.PI 2))
+;            ;      (m/translate-z (/ s 2)))
+;            ; (->> (m/square s {:background-color "#999999" :opacity 0.5}) ;; base
+;            ;      (m/rotate-x (- (/ js/Math.PI 2)))
+;            ;      (m/translate-z (/ s 2)))
+;            (->> (m/square s {:background-color "#006699" :opacity 0.5}) ;;front
+;                 (m/skew-x (- alpha))
+;                 (m/scale-y (js/Math.cos (- alpha)))
+;                 (m/rotate-y 0)
+;                 (m/translate-z translate)
+;                 (m/rotate-x (- (- (/ js/Math.PI 2) dihedral-angle))))
+;            ; (->> (m/square s {:background-color "#ff6600" :opacity 0.5}) ;;right
+;            ;      (m/skew-x alpha)
+;            ;      (m/scale-y (js/Math.cos alpha))
+;            ;      (m/rotate-y (/ js/Math.PI 2))
+;            ;      (m/translate-z (/ s 2)))
+;            ; (->> (m/square s {:background-color "#ff00ff" :opacity 0.5}) ;;back
+;            ;      (m/skew-x alpha)
+;            ;      (m/scale-y (js/Math.cos alpha))
+;            ;      (m/rotate-y js/Math.PI)
+;            ;      ; (m/skew-x (- dihedral-angle (/ js/Math.PI 2)))
+;            ;      (m/translate-z (/ s 2)))
+;            (->> (m/square s {:background-color "#00ff00" :opacity 0.5}) ;; left
+;                 (m/rotate-y (- (central-angle 5)))
+;                 (m/skew-x alpha)
+;                 (m/scale-y (js/Math.cos alpha))
+;                 (m/translate-z translate)
+;                 (m/rotate-x (- (- (/ js/Math.PI 2) dihedral-angle)))))
+;          (m/translate-z 7)
+;          (m/translate-y -7.0))))
 
 (defn scene []
   (let [rotate (atom {:x (- (/ js/Math.PI 6)) :y 0})
@@ -105,9 +115,10 @@
              :on-mouse-down record-pos
              :on-mouse-move update-rotate
              :on-mouse-up clear-pos}
-       [:div {:style {:transform (str "rotateX(" (:x @rotate) "rad) rotateY(" (:y @rotate) "rad)")}}
-        [shape (dodecahedron 7.5)]
-        [shape (rhombohedron 7.5)]]])))
+       [transform
+        [(m/rotate-x (:x @rotate))
+         (m/rotate-y (:y @rotate))]
+        [dodecahedron 7.5]]])))
 
 (reagent/render-component [scene]
                           (. js/document (getElementById "app")))

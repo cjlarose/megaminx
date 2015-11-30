@@ -1,61 +1,37 @@
 (ns megaminx.model)
 
-(defn rect [w h & [styles]]
-  {:name :rect
-   :attrs {:w w :h h}
-   :styles (if styles styles {})
-   :transforms []})
+(defn rotate-x [angle]
+  {:name "rotateX"
+   :args [(str angle "rad")]})
 
-(defn square [s & args]
-  (apply rect s s args))
+(defn rotate-y [angle]
+  {:name "rotateY"
+   :args [(str angle "rad")]})
 
-(defn isosceles-triangle [b h color & [styles]]
-  {:name :isosceles-triangle
-   :attrs {:b b :h h :color color}
-   :styles (if styles styles {})
-   :transforms []})
+(defn rotate-z [angle]
+  {:name "rotateZ"
+   :args [(str angle "rad")]})
 
-(defn rotate-x [angle shape]
-  (update shape :transforms conj {:name "rotateX"
-                                  :args [(str angle "rad")]}))
+(defn skew-x [angle]
+  {:name "skewX"
+   :args [(str angle "rad")]})
 
-(defn rotate-y [angle shape]
-  (update shape :transforms conj {:name "rotateY"
-                                  :args [(str angle "rad")]}))
+(defn skew-y [angle]
+  {:name "skewY"
+   :args [(str angle "rad")]})
 
-(defn rotate-z [angle shape]
-  (update shape :transforms conj {:name "rotateZ"
-                                  :args [(str angle "rad")]}))
-(defn skew-x [angle shape]
-  (update shape :transforms conj {:name "skewX"
-                                  :args [(str angle "rad")]}))
+(defn scale-y [s]
+  {:name "scaleY"
+   :args [(str s)]})
 
-(defn skew-y [angle shape]
-  (update shape :transforms conj {:name "skewY"
-                                  :args [(str angle "rad")]}))
+(defn scale-z [s]
+  {:name "scaleZ"
+   :args [(str s)]})
 
-(defn scale-y [s shape]
-  (update shape :transforms conj {:name "scaleY"
-                                  :args [(str s)]}))
+(defn translate-y [t]
+  {:name "translateY"
+   :args [(str t "em")]})
 
-(defn scale-z [s shape]
-  (update shape :transforms conj {:name "scaleZ"
-                                  :args [(str s)]}))
-
-(defn scale-3d [x y z shape]
-  (update shape :transforms conj {:name "scale3d"
-                                  :args [(str x "," y "," z)]}))
-
-(defn translate-y [t shape]
-  (update shape :transforms conj {:name "translateY"
-                                  :args [(str t "em")]}))
-
-(defn translate-z [t shape]
-  (update shape :transforms conj {:name "translateZ"
-                                  :args [(str t "em")]}))
-
-(defn composite-shape [& children]
-  {:name :composite
-   :transforms []
-   :styles {}
-   :attrs {:children children}})
+(defn translate-z [t]
+  {:name "translateZ"
+   :args [(str t "em")]})

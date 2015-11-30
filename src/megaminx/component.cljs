@@ -18,21 +18,13 @@
                         :border-width (str "0 " b "em " h "em")}
                        styles)}])
 
-(declare shape)
-
-(defn composite-shape [{:keys [children]} styles]
-  (apply vector :div {:style styles} (map (fn [c] [shape c]) children)))
-
 (defn transform-string [{:keys [name args]}]
   (str name "(" (join "," args) ")"))
 
 (defn transforms-string [transforms]
   (join " " (map transform-string transforms)))
 
-(defn shape [{:keys [name attrs styles transforms]}]
-  (let [t (transforms-string transforms)
-        styles (merge styles {:transform t})]
-    (case name
-      :rect [rect attrs styles]
-      :isosceles-triangle [isosceles-triangle attrs styles]
-      :composite [composite-shape attrs styles])))
+(defn transform [transforms & children]
+  [:div
+   {:style {:transform (transforms-string transforms)}}
+   (map-indexed #(with-meta %2 {:key %1}) children)])
