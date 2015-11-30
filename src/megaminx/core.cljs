@@ -1,6 +1,11 @@
 (ns megaminx.core
   (:require [reagent.core :as reagent :refer [atom]]
-            [megaminx.util :refer [central-angle dihedral-angle circumradius phi apothem]]
+            [megaminx.util :refer [central-angle
+                                   interior-angle
+                                   dihedral-angle
+                                   circumradius
+                                   phi
+                                   apothem]]
             [megaminx.component :refer [shape]]
             [megaminx.model :as m]))
 
@@ -49,29 +54,41 @@
                      ["#ff6600" "#666666" "#ffc0cb" "#0000ff" "#999900"])))))
 
 (defn rhombohedron [s]
-  (->> (m/composite-shape
-         (->> (m/square s {:background-color "#000000"})
-              (m/rotate-x (/ js/Math.PI 2))
-              (m/translate-z (/ s 2)))
-         (->> (m/square s {:background-color "#000000"})
-              (m/rotate-x (- (/ js/Math.PI 2)))
-              (m/translate-z (/ s 2)))
-         (->> (m/square s {:background-color "#000000"})
-              (m/rotate-y 0)
-              ; (m/skew-x (- dihedral-angle (/ js/Math.PI 2)))
-              (m/translate-z (/ s 2)))
-         (->> (m/square s {:background-color "#ff6600"})
-              (m/rotate-y (/ js/Math.PI 2))
-              (m/translate-z (/ s 2)))
-         (->> (m/square s {:background-color "#ff00ff"})
-              (m/rotate-y js/Math.PI)
-              ; (m/skew-x (- dihedral-angle (/ js/Math.PI 2)))
-              (m/translate-z (/ s 2)))
-         (->> (m/square s {:background-color "#ff0000"})
-              (m/rotate-y (* js/Math.PI (/ 3 2)))
-              (m/translate-z (/ s 2))))
-       (m/skew-x (- dihedral-angle (/ js/Math.PI 2)))
-       (m/scale-y (js/Math.cos (- dihedral-angle (/ js/Math.PI 2))))))
+  (let [alpha (/ js/Math.PI 10) ;(- (interior-angle 5) (/ js/Math.PI 2))
+        translate 5.0]; (/ s 2)]
+        ; alpha (* (/ 1 5) js/Math.PI)]
+    (->> (m/composite-shape
+           ; (->> (m/square s {:background-color "#0000ff" :opacity 0.5}) ;;top
+           ;      (m/rotate-x (/ js/Math.PI 2))
+           ;      (m/translate-z (/ s 2)))
+           ; (->> (m/square s {:background-color "#999999" :opacity 0.5}) ;; base
+           ;      (m/rotate-x (- (/ js/Math.PI 2)))
+           ;      (m/translate-z (/ s 2)))
+           (->> (m/square s {:background-color "#006699" :opacity 0.5}) ;;front
+                (m/skew-x (- alpha))
+                (m/scale-y (js/Math.cos (- alpha)))
+                (m/rotate-y 0)
+                (m/translate-z translate)
+                (m/rotate-x (- (- (/ js/Math.PI 2) dihedral-angle))))
+           ; (->> (m/square s {:background-color "#ff6600" :opacity 0.5}) ;;right
+           ;      (m/skew-x alpha)
+           ;      (m/scale-y (js/Math.cos alpha))
+           ;      (m/rotate-y (/ js/Math.PI 2))
+           ;      (m/translate-z (/ s 2)))
+           ; (->> (m/square s {:background-color "#ff00ff" :opacity 0.5}) ;;back
+           ;      (m/skew-x alpha)
+           ;      (m/scale-y (js/Math.cos alpha))
+           ;      (m/rotate-y js/Math.PI)
+           ;      ; (m/skew-x (- dihedral-angle (/ js/Math.PI 2)))
+           ;      (m/translate-z (/ s 2)))
+           (->> (m/square s {:background-color "#00ff00" :opacity 0.5}) ;; left
+                (m/rotate-y (- (central-angle 5)))
+                (m/skew-x alpha)
+                (m/scale-y (js/Math.cos alpha))
+                (m/translate-z translate)
+                (m/rotate-x (- (- (/ js/Math.PI 2) dihedral-angle)))))
+         (m/translate-z 7)
+         (m/translate-y -7.0))))
 
 (defn scene []
   (let [rotate (atom {:x (- (/ js/Math.PI 6)) :y 0})
