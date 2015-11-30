@@ -19,14 +19,13 @@
                           :rotate-x ""}))
 
 (defn regular-pentagon [s color]
-  (let [b (/ s 2)
-        h (apothem 5 s)]
+  (let [h (apothem 5 s)]
     [:div
      (map (fn [i] (with-meta
                     [transform
                      [(m/rotate-z (* i (central-angle 5)))
                       (m/translate-y (/ h 2))]
-                     (component/isosceles-triangle {:b b :h h :color color} {})]
+                     (component/isosceles-triangle {:b s :h h :color color} {})]
                     {:key i}))
           (range 5))]))
 

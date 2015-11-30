@@ -11,11 +11,11 @@
 
 (defn isosceles-triangle [{:keys [b h color]} styles]
   [:div {:style (merge {:border-style "solid"
-                        :margin-left (str (- b) "em")
+                        :margin-left (str (- (/ b 2)) "em")
                         :margin-top (str (/ h -2) "em")
                         :border-color (str "transparent transparent " color)
                         :opacity 0.5
-                        :border-width (str "0 " b "em " h "em")}
+                        :border-width (str "0 " (/ b 2) "em " h "em")}
                        styles)}])
 
 (defn transform-string [{:keys [name args]}]
