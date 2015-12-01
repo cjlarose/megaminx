@@ -84,24 +84,30 @@
 
 (defn rhombohedron [s]
   (let [alpha (/ js/Math.PI 10) ;(- (interior-angle 5) (/ js/Math.PI 2))
-        translate 5.0]; (/ s 2)]
-        ; alpha (* (/ 1 5) js/Math.PI)]
+        rotate-x (- (- (/ js/Math.PI 2) dihedral-angle)) ; TODO: derive from parameters
+        translate (/ s 2)]
     [transform
-     [(m/translate-z 7)
-      (m/translate-y -7.0)]
-     [transform
-      [(m/skew-x (- alpha))
-       (m/scale-y (js/Math.cos (- alpha)))
-       (m/rotate-y 0)
-       (m/translate-z translate)
-       (m/rotate-x (- (- (/ js/Math.PI 2) dihedral-angle)))]
+     []
+     [transform ;; base
+      [(m/rotate-x (- (/ js/Math.PI 2)))
+       (m/translate-z (/ (* s (js/Math.cos rotate-x)) 2))
+       (m/skew-x (- alpha))
+       (m/scale-y (js/Math.cos (- alpha)))]
+       (component/rect {:w s :h s} {:background-color "#9966ff" :opacity 0.5})]
+     [transform ;; front
+      [(m/translate-z (- translate (/ (* s (js/Math.sin rotate-x)) 2)))
+       (m/rotate-x rotate-x)
+       (m/translate-x (* s (js/Math.sin alpha)))
+       (m/skew-x (- alpha))
+       (m/scale-y (js/Math.cos (- alpha)))]
       (component/rect {:w s :h s} {:background-color "#006699" :opacity 0.5})]
-     [transform
+     [transform ;; left
       [(m/rotate-y (- (central-angle 5)))
+       (m/translate-z (- translate (/ (* s (js/Math.sin rotate-x)) 2)))
+       (m/rotate-x rotate-x)
+       (m/translate-x (- (* s (js/Math.sin alpha))))
        (m/skew-x alpha)
-       (m/scale-y (js/Math.cos alpha))
-       (m/translate-z translate)
-       (m/rotate-x (- (- (/ js/Math.PI 2) dihedral-angle)))]
+       (m/scale-y (js/Math.cos alpha))]
       (component/rect {:w s :h s} {:background-color "#00ff00" :opacity 0.5})]]))
 
 (defn scene []
