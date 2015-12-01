@@ -82,33 +82,48 @@
                                   {:key (+ i 7)}))
                   ["#ff6600" "#666666" "#ffc0cb" "#0000ff" "#999900"])]))
 
-(defn rhombohedron [s]
-  (let [alpha (/ js/Math.PI 10) ;(- (interior-angle 5) (/ js/Math.PI 2))
-        rotate-x (- (- (/ js/Math.PI 2) dihedral-angle)) ; TODO: derive from parameters
-        translate (/ s 2)]
-    [transform
-     []
-     [transform ;; base
-      [(m/rotate-x (- (/ js/Math.PI 2)))
-       (m/translate-z (/ (* s (js/Math.cos rotate-x)) 2))
-       (m/skew-x (- alpha))
-       (m/scale-y (js/Math.cos (- alpha)))]
-       (component/rect {:w s :h s} {:background-color "#9966ff" :opacity 0.5})]
+(defn rhombohedron [s alpha beta gamma]
+  (let [[skew-alpha skew-beta skew-gamma] (map #(- % (/ js/Math.PI 2)) [alpha beta gamma])]
+    [:div
      [transform ;; front
-      [(m/translate-z (- translate (/ (* s (js/Math.sin rotate-x)) 2)))
-       (m/rotate-x rotate-x)
-       (m/translate-x (* s (js/Math.sin alpha)))
-       (m/skew-x (- alpha))
-       (m/scale-y (js/Math.cos (- alpha)))]
-      (component/rect {:w s :h s} {:background-color "#006699" :opacity 0.5})]
+      [(m/translate-z (/ s 2))
+       (m/skew-x skew-alpha)
+       (m/scale-y (js/Math.cos skew-alpha))]
+      (component/rect {:w s :h s} {:background-color "#9966ff" :opacity 0.5})]
+     [transform ;; back
+      [(m/rotate-y js/Math.PI)
+       (m/translate-z (/ s 2))
+       (m/rotate-x js/Math.PI)
+       (m/skew-x skew-alpha)
+       (m/scale-y (js/Math.cos skew-alpha))]
+      (component/rect {:w s :h s} {:background-color "#9966ff" :opacity 0.5})]
+     [transform ;; right
+      [(m/rotate-y (- js/Math.PI alpha))
+       (m/translate-z (/ s 2))
+       ; (m/rotate-x (- alpha (/ js/Math.PI 2)))
+       (m/skew-x skew-beta)
+       (m/scale-y (js/Math.cos skew-beta))]
+      (component/rect {:w s :h s} {:background-color "#0066ff" :opacity 0.5})]
      [transform ;; left
-      [(m/rotate-y (- (central-angle 5)))
-       (m/translate-z (- translate (/ (* s (js/Math.sin rotate-x)) 2)))
-       (m/rotate-x rotate-x)
-       (m/translate-x (- (* s (js/Math.sin alpha))))
-       (m/skew-x alpha)
-       (m/scale-y (js/Math.cos alpha))]
-      (component/rect {:w s :h s} {:background-color "#00ff00" :opacity 0.5})]]))
+      [(m/rotate-y (- (* js/Math.PI 2) alpha))
+       (m/translate-z (/ s 2))
+       (m/rotate-x js/Math.PI)
+       (m/skew-x skew-beta)
+       (m/scale-y (js/Math.cos skew-beta))]
+      (component/rect {:w s :h s} {:background-color "#0066ff" :opacity 0.5})]
+     [transform ;; top
+      [(m/rotate-x beta)
+       (m/translate-z (/ s 2))
+       (m/skew-x skew-gamma)
+       (m/scale-y (js/Math.cos skew-gamma))]
+      (component/rect {:w s :h s} {:background-color "#ff6699" :opacity 0.5})]
+     [transform ;; bottom
+      [(m/rotate-x (+ js/Math.PI beta))
+       (m/translate-z (/ s 2))
+       (m/rotate-x js/Math.PI)
+       (m/skew-x skew-gamma)
+       (m/scale-y (js/Math.cos skew-gamma))]
+      (component/rect {:w s :h s} {:background-color "#ff6699" :opacity 0.5})]]))
 
 (defn scene []
   (let [rotate (atom {:x (- (/ js/Math.PI 6)) :y 0})
