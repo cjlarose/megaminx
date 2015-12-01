@@ -98,13 +98,13 @@
        (m/scale-y (js/Math.cos skew-alpha))]
       (component/rect {:w s :h s} {:background-color "#9966ff" :opacity 0.5})]
      [transform ;; right
-      [(m/rotate-y (- js/Math.PI alpha))
+      [(m/rotate-y gamma)
        (m/translate-z (/ s 2))
        (m/skew-x skew-beta)
        (m/scale-y (js/Math.cos skew-beta))]
       (component/rect {:w s :h s} {:background-color "#0066ff" :opacity 0.5})]
      [transform ;; left
-      [(m/rotate-y (- (* js/Math.PI 2) alpha))
+      [(m/rotate-y (+ js/Math.PI gamma))
        (m/translate-z (/ s 2))
        (m/rotate-x js/Math.PI)
        (m/skew-x skew-beta)
