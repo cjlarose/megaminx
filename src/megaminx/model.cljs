@@ -28,6 +28,10 @@
   {:name "scaleZ"
    :args [(str s)]})
 
+(defn translate-x [t]
+  {:name "translateX"
+   :args [(str t "em")]})
+
 (defn translate-y [t]
   {:name "translateY"
    :args [(str t "em")]})
