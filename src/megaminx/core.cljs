@@ -100,7 +100,6 @@
      [transform ;; right
       [(m/rotate-y (- js/Math.PI alpha))
        (m/translate-z (/ s 2))
-       ; (m/rotate-x (- alpha (/ js/Math.PI 2)))
        (m/skew-x skew-beta)
        (m/scale-y (js/Math.cos skew-beta))]
       (component/rect {:w s :h s} {:background-color "#0066ff" :opacity 0.5})]
@@ -144,7 +143,7 @@
         [(m/rotate-x (:x @rotate))
          (m/rotate-y (:y @rotate))]
         [dodecahedron 7.5]
-        [rhombohedron 3.75]]])))
+        [rhombohedron 9 (* js/Math.PI 0.75) (/ js.Math.PI 6) (/ js.Math.PI 5)]]])))
 
 (reagent/render-component [scene]
                           (. js/document (getElementById "app")))
