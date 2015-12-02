@@ -86,39 +86,47 @@
   (let [[skew-alpha skew-beta skew-gamma] (map #(- % (/ js/Math.PI 2)) [alpha beta gamma])]
     [:div
      [transform ;; front
-      [(m/translate-z (/ s 2))
+      [(m/translate-z (* s (js/Math.sin beta) 0.5))
+       (m/translate-y (* s (js/Math.cos beta) 0.5))
        (m/skew-x skew-alpha)
        (m/scale-y (js/Math.cos skew-alpha))]
       (component/rect {:w s :h s} {:background-color "#9966ff" :opacity 0.5})]
      [transform ;; back
       [(m/rotate-y js/Math.PI)
-       (m/translate-z (/ s 2))
+       (m/translate-z (* s (js/Math.sin beta) 0.5))
+       (m/translate-y (- (* s (js/Math.cos beta) 0.5)))
        (m/rotate-x js/Math.PI)
        (m/skew-x skew-alpha)
        (m/scale-y (js/Math.cos skew-alpha))]
       (component/rect {:w s :h s} {:background-color "#9966ff" :opacity 0.5})]
      [transform ;; right
       [(m/rotate-y gamma)
+       (m/rotate-z skew-beta)
        (m/translate-z (/ s 2))
+       (m/rotate-x (- alpha (/ js/Math.PI 2)))
        (m/skew-x skew-beta)
        (m/scale-y (js/Math.cos skew-beta))]
       (component/rect {:w s :h s} {:background-color "#0066ff" :opacity 0.5})]
      [transform ;; left
       [(m/rotate-y (+ js/Math.PI gamma))
+       (m/rotate-z (- skew-beta))
        (m/translate-z (/ s 2))
+       (m/rotate-x (- (- alpha (/ js/Math.PI 2))))
        (m/rotate-x js/Math.PI)
        (m/skew-x skew-beta)
        (m/scale-y (js/Math.cos skew-beta))]
       (component/rect {:w s :h s} {:background-color "#0066ff" :opacity 0.5})]
      [transform ;; top
-      [(m/rotate-x beta)
-       (m/translate-z (/ s 2))
+      [(m/translate-y (- (* s (js/Math.sin (- js/Math.PI alpha)) 0.5))) ;; accounts for height of front face
+       (m/translate-x (- (* s (js/Math.cos (- js/Math.PI alpha)) 0.5))) ;; accounts for skew of front fact
+       (m/rotate-x beta)
        (m/skew-x skew-gamma)
        (m/scale-y (js/Math.cos skew-gamma))]
       (component/rect {:w s :h s} {:background-color "#ff6699" :opacity 0.5})]
      [transform ;; bottom
-      [(m/rotate-x (+ js/Math.PI beta))
-       (m/translate-z (/ s 2))
+      [(m/translate-y (* s (js/Math.sin (- js/Math.PI alpha)) 0.5))
+       (m/translate-x (* s (js/Math.cos (- js/Math.PI alpha)) 0.5))
+       (m/rotate-x (+ js/Math.PI beta))
        (m/rotate-x js/Math.PI)
        (m/skew-x skew-gamma)
        (m/scale-y (js/Math.cos skew-gamma))]
@@ -142,8 +150,19 @@
        [transform
         [(m/rotate-x (:x @rotate))
          (m/rotate-y (:y @rotate))]
-        [dodecahedron 7.5]
-        [rhombohedron 9 (* js/Math.PI 0.75) (/ js.Math.PI 6) (/ js.Math.PI 5)]]])))
+        ;; [dodecahedron 7.5]
+        [transform
+         [(m/translate-x -14)]
+         [rhombohedron 9 (* js/Math.PI 0.5) (* js.Math.PI 0.5) (* js.Math.PI 0.5)]] ;; cube
+        [transform
+         [(m/translate-x -7)]
+         [rhombohedron 9 (* js/Math.PI 0.75) (* js.Math.PI 0.5) (* js.Math.PI 0.5)]]
+        [transform
+         [(m/translate-x 7)]
+         [rhombohedron 9 (* js/Math.PI 0.5) (/ js.Math.PI 4) (* js.Math.PI 0.5)]]
+        [transform
+         [(m/translate-x 14)]
+         [rhombohedron 9 (* js/Math.PI 0.5) (* js.Math.PI 0.5) (/ js.Math.PI 6)]]]])))
 
 (reagent/render-component [scene]
                           (. js/document (getElementById "app")))
