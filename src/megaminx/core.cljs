@@ -152,7 +152,7 @@
          (m/rotate-y (:y @rotate))]
         ;; [dodecahedron 7.5]
         [transform
-         [(m/translate-x -14)]
+         [(m/translate-x -21)]
          [rhombohedron 9 (* js/Math.PI 0.5) (* js.Math.PI 0.5) (* js.Math.PI 0.5)]] ;; cube
         [transform
          [(m/translate-x -7)]
@@ -161,7 +161,7 @@
          [(m/translate-x 7)]
          [rhombohedron 9 (* js/Math.PI 0.5) (/ js.Math.PI 4) (* js.Math.PI 0.5)]]
         [transform
-         [(m/translate-x 14)]
+         [(m/translate-x 21)]
          [rhombohedron 9 (* js/Math.PI 0.5) (* js.Math.PI 0.5) (/ js.Math.PI 6)]]]])))
 
 (reagent/render-component [scene]
