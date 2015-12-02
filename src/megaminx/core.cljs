@@ -92,9 +92,9 @@
        (m/scale-y (js/Math.cos skew-alpha))]
       (component/rect {:w s :h s} {:background-color "#9966ff" :opacity 0.5})]
      [transform ;; back
-      [(m/rotate-y js/Math.PI)
-       (m/translate-z (* s (js/Math.sin beta) 0.5))
+      [(m/translate-z (- (* s (js/Math.sin beta) 0.5)))
        (m/translate-y (- (* s (js/Math.cos beta) 0.5)))
+       (m/rotate-y js/Math.PI)
        (m/rotate-x js/Math.PI)
        (m/skew-x skew-alpha)
        (m/scale-y (js/Math.cos skew-alpha))]
