@@ -20,6 +20,10 @@
   {:name "skewY"
    :args [(str angle "rad")]})
 
+(defn scale-x [s]
+  {:name "scaleX"
+   :args [(str s)]})
+
 (defn scale-y [s]
   {:name "scaleY"
    :args [(str s)]})
