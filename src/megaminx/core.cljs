@@ -12,6 +12,11 @@
 (defonce app-state (atom {:rotate-y "Hello world!"
                           :rotate-x ""}))
 
+(defonce gl-context (atom nil))
+(defonce vertex-buffer (atom nil))
+(defonce gl-program (atom nil))
+(defonce t (atom (js/Date.)))
+
 (def vertex-shader
   "attribute vec3 aVertexPosition;
 
@@ -51,15 +56,26 @@
     (.useProgram gl program)
     program))
 
-(defn init-buffers [gl]
+(defn init-buffer [gl arr]
+  (let [buffer (.createBuffer gl)]
+    (doto gl
+      (.bindBuffer (.-ARRAY_BUFFER gl) buffer)
+      (.bufferData (.-ARRAY_BUFFER gl) arr (.-STATIC_DRAW gl)))
+    buffer))
+
+(defn init-vertex-buffer [gl]
   (let [vertices (js/Float32Array. #js [ 1.0  1.0 0.0
                                         -1.0  1.0 0.0
                                          1.0 -1.0 0.0
-                                        -1.0 -1.0 0.0])
-        buffer (.createBuffer gl)]
-    (.bindBuffer gl (.-ARRAY_BUFFER gl) buffer)
-    (.bufferData gl (.-ARRAY_BUFFER gl) vertices (.-STATIC_DRAW gl))
-    buffer))
+                                        -1.0 -1.0 0.0])]
+    (init-buffer gl vertices)))
+
+(defn init-vertex-color-buffer [gl]
+  (let [colors (js/Float32Array. #js [1.0 1.0 1.0 1.0
+                                      1.0 0.0 0.0 1.0
+                                      0.0 1.0 0.0 1.0
+                                      0.0 0.0 1.0 1.1])]
+    (init-buffer gl colors)))
 
 (defn translation-matrix [dx dy dz]
   (doto (.createIdentityMatrix Matrix 4)
@@ -77,20 +93,24 @@
       (.uniformMatrix4fv p-uniform false (js/Float32Array. (flatten-matrix perspective-matrix)))
       (.uniformMatrix4fv mv-uniform false (js/Float32Array. (flatten-matrix mv-matrix))))))
 
-(defn draw-scene [gl vertex-buffer program vertex-pos-attr]
-  (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
-  (.bindBuffer gl (.-ARRAY_BUFFER gl) vertex-buffer)
-  (.vertexAttribPointer gl vertex-pos-attr 3 (.-FLOAT gl) false 0 0)
-  (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
-        mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                      (.multiply (translation-matrix -0.0 0.0 -6.0)))]
-    (set-matrix-uniforms gl program perspective-matrix mv-matrix))
-  (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4))
+(defn on-update [component]
+  (let [gl @gl-context
+        vertex-pos (.getAttribLocation gl @gl-program "aVertexPosition")]
+    (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
+    (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-buffer)
+    (.vertexAttribPointer gl vertex-pos 3 (.-FLOAT gl) false 0 0)
+    (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
+          mv-matrix (-> (.createIdentityMatrix Matrix 4)
+                        (.multiply (translation-matrix -0.0 0.0 -6.0)))]
+      (set-matrix-uniforms gl @gl-program perspective-matrix mv-matrix))
+    (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4)
+    (reset! t (js/Date.))))
 
 (defn on-mount [component]
   (let [canvas (reagent/dom-node component)
         gl (.getContext canvas "webgl")
-        vertex-buffer (init-buffers gl)
+        v-buffer (init-vertex-buffer gl)
+        color-buffer (init-vertex-color-buffer gl)
         program (init-shaders
                   gl
                   (set-shader gl :vertex vertex-shader)
@@ -102,13 +122,17 @@
       (.enable (.-DEPTH_TEST gl))
       (.depthFunc (.-LEQUAL gl))
       (.enableVertexAttribArray gl a-vertex-position))
-    (.setInterval js/window (partial draw-scene gl vertex-buffer program a-vertex-position) 1000)))
+    (reset! gl-context gl)
+    (reset! gl-program program)
+    (reset! vertex-buffer v-buffer)
+    (reset! t (js/Date.))))
 
 (defn scene []
   [:canvas {:width 640
-            :height 480}])
+            :height 480} @t])
 
-(reagent/render-component [(with-meta scene {:component-did-mount on-mount})]
+(reagent/render-component [(with-meta scene {:component-did-mount on-mount
+                                             :component-did-update on-update})]
                           (. js/document (getElementById "app")))
 
 
