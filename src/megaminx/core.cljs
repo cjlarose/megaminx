@@ -14,22 +14,30 @@
 
 (defonce gl-context (atom nil))
 (defonce vertex-buffer (atom nil))
+(defonce vertex-color-buffer (atom nil))
 (defonce gl-program (atom nil))
 (defonce t (atom (js/Date.)))
 
 (def vertex-shader
   "attribute vec3 aVertexPosition;
+   attribute vec4 aVertexColor;
 
    uniform mat4 uMVMatrix;
    uniform mat4 uPMatrix;
 
+   varying lowp vec4 vColor;
+
    void main(void) {
      gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+     vColor = aVertexColor;
    }")
 
 (def fragment-shader
-  "void main(void) {
-     gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+  "varying lowp vec4 vColor;
+
+   void main(void) {
+     gl_FragColor = vColor;
+     // gl_FragColor = vec4(1.0, 0.5, 1.0, 1.0);
    }")
 
 (defn set-shader [gl shader-type source]
@@ -74,7 +82,7 @@
   (let [colors (js/Float32Array. #js [1.0 1.0 1.0 1.0
                                       1.0 0.0 0.0 1.0
                                       0.0 1.0 0.0 1.0
-                                      0.0 0.0 1.0 1.1])]
+                                      0.0 0.0 1.0 1.0])]
     (init-buffer gl colors)))
 
 (defn translation-matrix [dx dy dz]
@@ -95,10 +103,13 @@
 
 (defn on-update [component]
   (let [gl @gl-context
-        vertex-pos (.getAttribLocation gl @gl-program "aVertexPosition")]
+        vertex-pos (.getAttribLocation gl @gl-program "aVertexPosition")
+        vertex-color (.getAttribLocation gl @gl-program "aVertexColor")]
     (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
     (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-buffer)
     (.vertexAttribPointer gl vertex-pos 3 (.-FLOAT gl) false 0 0)
+    (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-color-buffer)
+    (.vertexAttribPointer gl vertex-color 4 (.-FLOAT gl) false 0 0)
     (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
           mv-matrix (-> (.createIdentityMatrix Matrix 4)
                         (.multiply (translation-matrix -0.0 0.0 -6.0)))]
@@ -115,16 +126,19 @@
                   gl
                   (set-shader gl :vertex vertex-shader)
                   (set-shader gl :fragment fragment-shader))
-        a-vertex-position (.getAttribLocation gl program "aVertexPosition")]
+        a-vertex-position (.getAttribLocation gl program "aVertexPosition")
+        a-vertex-color (.getAttribLocation gl program "aVertexColor")]
     (doto gl
       (.clearColor 0.0 0.0 0.0 1.0)
       (.clearDepth 1.0)
       (.enable (.-DEPTH_TEST gl))
       (.depthFunc (.-LEQUAL gl))
-      (.enableVertexAttribArray gl a-vertex-position))
+      (.enableVertexAttribArray a-vertex-color)
+      (.enableVertexAttribArray a-vertex-position))
     (reset! gl-context gl)
     (reset! gl-program program)
     (reset! vertex-buffer v-buffer)
+    (reset! vertex-color-buffer color-buffer)
     (reset! t (js/Date.))))
 
 (defn scene []
