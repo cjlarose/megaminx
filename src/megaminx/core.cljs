@@ -45,8 +45,10 @@
     (doto gl
       (.attachShader program vs)
       (.attachShader program fs)
-      (.linkProgram program)
-      (.useProgram program))
+      (.linkProgram program))
+    (if-not (.getProgramParameter gl program (.-LINK_STATUS gl))
+      (.error js/console "Unable to initialize shader program"))
+    (.useProgram gl program)
     program))
 
 (defn init-buffers [gl]
@@ -81,8 +83,8 @@
     (.bindBuffer gl (.-ARRAY_BUFFER gl) vertex-buffer)
     (.vertexAttribPointer gl vertex-pos-attr 3 (.-FLOAT gl) false 0 0)
     (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
-          mv-matrix (doto (.createIdentityMatrix Matrix 4)
-                      (.multiply (translation-matrix -0.0 0.0 -6.0)))]
+          mv-matrix (-> (.createIdentityMatrix Matrix 4)
+                        (.multiply (translation-matrix -0.0 0.0 -6.0)))]
       (set-matrix-uniforms gl program perspective-matrix mv-matrix))
     (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4)))
 
