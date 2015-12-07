@@ -68,7 +68,7 @@
     (.setValueAt 2 3 dz)))
 
 (defn flatten-matrix [m]
-  (.apply js/Array.prototype.concat (js/Array.) (.toArray m)))
+  (.apply js/Array.prototype.concat (js/Array.) (.toArray (.getTranspose (Matrix. (.toArray m))))))
 
 (defn set-matrix-uniforms [gl program perspective-matrix mv-matrix]
   (let [p-uniform (.getUniformLocation gl program "uPMatrix")
@@ -77,16 +77,15 @@
       (.uniformMatrix4fv p-uniform false (js/Float32Array. (flatten-matrix perspective-matrix)))
       (.uniformMatrix4fv mv-uniform false (js/Float32Array. (flatten-matrix mv-matrix))))))
 
-(defn draw-scene [gl vertex-buffer program]
-  (let [vertex-pos-attr (.getAttribLocation gl program "aVertexPosition")]
-    (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
-    (.bindBuffer gl (.-ARRAY_BUFFER gl) vertex-buffer)
-    (.vertexAttribPointer gl vertex-pos-attr 3 (.-FLOAT gl) false 0 0)
-    (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
-          mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                        (.multiply (translation-matrix -0.0 0.0 -6.0)))]
-      (set-matrix-uniforms gl program perspective-matrix mv-matrix))
-    (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4)))
+(defn draw-scene [gl vertex-buffer program vertex-pos-attr]
+  (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
+  (.bindBuffer gl (.-ARRAY_BUFFER gl) vertex-buffer)
+  (.vertexAttribPointer gl vertex-pos-attr 3 (.-FLOAT gl) false 0 0)
+  (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
+        mv-matrix (-> (.createIdentityMatrix Matrix 4)
+                      (.multiply (translation-matrix -0.0 0.0 -6.0)))]
+    (set-matrix-uniforms gl program perspective-matrix mv-matrix))
+  (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4))
 
 (defn on-mount [component]
   (let [canvas (reagent/dom-node component)
@@ -95,14 +94,15 @@
         program (init-shaders
                   gl
                   (set-shader gl :vertex vertex-shader)
-                  (set-shader gl :fragment fragment-shader))]
+                  (set-shader gl :fragment fragment-shader))
+        a-vertex-position (.getAttribLocation gl program "aVertexPosition")]
     (doto gl
       (.clearColor 0.0 0.0 0.0 1.0)
       (.clearDepth 1.0)
       (.enable (.-DEPTH_TEST gl))
       (.depthFunc (.-LEQUAL gl))
-      (.enableVertexAttribArray gl (.getAttribLocation gl program "aVertexPosition")))
-    (.setInterval js/window (partial draw-scene gl vertex-buffer program) 1000)))
+      (.enableVertexAttribArray gl a-vertex-position))
+    (.setInterval js/window (partial draw-scene gl vertex-buffer program a-vertex-position) 1000)))
 
 (defn scene []
   [:canvas {:width 640
