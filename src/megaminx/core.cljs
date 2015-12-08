@@ -91,6 +91,13 @@
     (.setValueAt 1 3 dy)
     (.setValueAt 2 3 dz)))
 
+(defn rotate-x-matrix [angle]
+  (doto (.createIdentityMatrix Matrix 4)
+    (.setValueAt 1 1 (js/Math.cos angle))
+    (.setValueAt 1 2 (- (js/Math.sin angle)))
+    (.setValueAt 2 1 (js/Math.sin angle))
+    (.setValueAt 2 2 (js/Math.cos angle))))
+
 (defn flatten-matrix [m]
   (.apply js/Array.prototype.concat (js/Array.) (.toArray (.getTranspose (Matrix. (.toArray m))))))
 
@@ -104,7 +111,8 @@
 (defn on-update [component]
   (let [gl @gl-context
         vertex-pos (.getAttribLocation gl @gl-program "aVertexPosition")
-        vertex-color (.getAttribLocation gl @gl-program "aVertexColor")]
+        vertex-color (.getAttribLocation gl @gl-program "aVertexColor")
+        square-rotation (/ @t 1000)]
     (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
     (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-buffer)
     (.vertexAttribPointer gl vertex-pos 3 (.-FLOAT gl) false 0 0)
@@ -112,7 +120,8 @@
     (.vertexAttribPointer gl vertex-color 4 (.-FLOAT gl) false 0 0)
     (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
           mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                        (.multiply (translation-matrix -0.0 0.0 -6.0)))]
+                        (.multiply (translation-matrix -0.0 0.0 -6.0))
+                        (.multiply (rotate-x-matrix square-rotation)))]
       (set-matrix-uniforms gl @gl-program perspective-matrix mv-matrix))
     (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4)
     (reset! t (js/Date.))))
