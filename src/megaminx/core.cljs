@@ -71,17 +71,20 @@
    a-position vertices
    a-vertex-color colors})
 
+(defn flatten-matrix [m]
+  (.apply js/Array.prototype.concat (js/Array.) (.toArray (.getTranspose (Matrix. (.toArray m))))))
+
 (defn draw-scene [gl driver program]
   (fn [state]
     (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
     (let [square-rotation (/ (:last-rendered state) 1000)
           perspective-matrix (-> (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
-                                 (.toArray)
+                                 (flatten-matrix)
                                  (js->clj))
           mv-matrix (-> (.createIdentityMatrix Matrix 4)
                         (.multiply (translation-matrix -0.0 0.0 -6.0))
                         (.multiply (rotate-x-matrix square-rotation))
-                        (.toArray)
+                        (flatten-matrix)
                         (js->clj))
           bindings (gd/bind driver program (get-program-data perspective-matrix mv-matrix (:vertices square) (:colors square)))]
       (gd/draw-arrays driver bindings {:draw-mode :triangle-strip}))))
