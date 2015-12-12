@@ -1,5 +1,9 @@
 (ns megaminx.core
-  (:require [megaminx.gl-util :as gl-util])
+  (:require [megaminx.gl-util :as gl-util]
+            [gamma.api :as g]
+            [gamma.program :as p]
+            [gamma-driver.api :as gd]
+            [gamma-driver.drivers.basic :as driver])
   (:import goog.math.Matrix))
 
 (enable-console-print!)
@@ -11,75 +15,42 @@
 (def initial-app-state {:last-rendered 0})
 (defonce anim-loop (atom nil))
 
-(defonce vertex-buffer (atom nil))
-(defonce vertex-color-buffer (atom nil))
+(def u-p-matrix
+  (g/uniform "uPMatrix" :mat4))
 
-(def vertex-shader
-  "attribute vec3 aVertexPosition;
-   attribute vec4 aVertexColor;
+(def u-mv-matrix
+  (g/uniform "uMVMatrix" :mat4))
 
-   uniform mat4 uMVMatrix;
-   uniform mat4 uPMatrix;
+(def a-position
+  (g/attribute "aVertexPosition" :vec3))
 
-   varying lowp vec4 vColor;
+(def a-vertex-color
+  (g/attribute "aVertexColor" :vec4))
 
-   void main(void) {
-     gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-     vColor = aVertexColor;
-   }")
+(def v-color
+  (g/varying "vColor" :vec4 :lowp))
 
-(def fragment-shader
-  "varying lowp vec4 vColor;
+(def program-source
+  (p/program
+    {:vertex-shader {(g/gl-position) (-> u-p-matrix
+                                         (g/* u-mv-matrix)
+                                         (g/* (g/vec4 a-position 1.0)))
+                     v-color a-vertex-color}
+     :fragment-shader {(g/gl-frag-color) v-color}}))
 
-   void main(void) {
-     gl_FragColor = vColor;
-     // gl_FragColor = vec4(1.0, 0.5, 1.0, 1.0);
-   }")
-
-(defn set-shader [gl shader-type source]
-  (let [shader-type-constant (if (= shader-type :fragment)
-                               (.-FRAGMENT_SHADER gl)
-                               (.-VERTEX_SHADER gl))
-        shader (.createShader gl shader-type-constant)]
-    (doto gl
-      (.shaderSource shader source)
-      (.compileShader shader))
-    (if-not (.getShaderParameter gl shader (.-COMPILE_STATUS gl))
-      (let [err (.getShaderInfoLog gl shader)]
-        (.error js/console (str "Error compiling shaders: " err))))
-    shader))
-
-(defn init-shaders [gl vs fs]
-  (let [program (.createProgram gl)]
-    (doto gl
-      (.attachShader program vs)
-      (.attachShader program fs)
-      (.linkProgram program))
-    (if-not (.getProgramParameter gl program (.-LINK_STATUS gl))
-      (.error js/console "Unable to initialize shader program"))
-    (.useProgram gl program)
-    program))
-
-(defn init-buffer [gl arr]
-  (let [buffer (.createBuffer gl)]
-    (doto gl
-      (.bindBuffer (.-ARRAY_BUFFER gl) buffer)
-      (.bufferData (.-ARRAY_BUFFER gl) arr (.-STATIC_DRAW gl)))
-    buffer))
-
-(defn init-vertex-buffer [gl]
-  (let [vertices (js/Float32Array. #js [ 1.0  1.0 0.0
-                                        -1.0  1.0 0.0
-                                         1.0 -1.0 0.0
-                                        -1.0 -1.0 0.0])]
-    (init-buffer gl vertices)))
-
-(defn init-vertex-color-buffer [gl]
-  (let [colors (js/Float32Array. #js [1.0 1.0 1.0 1.0
-                                      1.0 0.0 0.0 1.0
-                                      0.0 1.0 0.0 1.0
-                                      0.0 0.0 1.0 1.0])]
-    (init-buffer gl colors)))
+(def square
+  {:vertices {:id :square-vertices
+              :data [[ 1.0  1.0 0.0]
+                     [-1.0  1.0 0.0]
+                     [ 1.0 -1.0 0.0]
+                     [-1.0 -1.0 0.0]]
+              :immutable? true}
+   :colors {:id :square-colors
+            :data [[1.0 1.0 1.0 1.0]
+                   [1.0 0.0 0.0 1.0]
+                   [0.0 1.0 0.0 1.0]
+                   [0.0 0.0 1.0 1.0]]
+            :immutable? true}})
 
 (defn translation-matrix [dx dy dz]
   (doto (.createIdentityMatrix Matrix 4)
@@ -94,32 +65,26 @@
     (.setValueAt 2 1 (js/Math.sin angle))
     (.setValueAt 2 2 (js/Math.cos angle))))
 
-(defn flatten-matrix [m]
-  (.apply js/Array.prototype.concat (js/Array.) (.toArray (.getTranspose (Matrix. (.toArray m))))))
+(defn get-program-data [p mv vertices colors]
+  {u-p-matrix p
+   u-mv-matrix mv
+   a-position vertices
+   a-vertex-color colors})
 
-(defn set-matrix-uniforms [gl program perspective-matrix mv-matrix]
-  (let [p-uniform (.getUniformLocation gl program "uPMatrix")
-        mv-uniform (.getUniformLocation gl program "uMVMatrix")]
-    (doto gl
-      (.uniformMatrix4fv p-uniform false (js/Float32Array. (flatten-matrix perspective-matrix)))
-      (.uniformMatrix4fv mv-uniform false (js/Float32Array. (flatten-matrix mv-matrix))))))
-
-(defn draw-scene [gl gl-program]
+(defn draw-scene [gl driver program]
   (fn [state]
-    (let [vertex-pos (.getAttribLocation gl gl-program "aVertexPosition")
-          vertex-color (.getAttribLocation gl gl-program "aVertexColor")
-          square-rotation (/ (:last-rendered state) 1000)]
-      (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
-      (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-buffer)
-      (.vertexAttribPointer gl vertex-pos 3 (.-FLOAT gl) false 0 0)
-      (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-color-buffer)
-      (.vertexAttribPointer gl vertex-color 4 (.-FLOAT gl) false 0 0)
-      (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
-            mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                          (.multiply (translation-matrix -0.0 0.0 -6.0))
-                          (.multiply (rotate-x-matrix square-rotation)))]
-        (set-matrix-uniforms gl gl-program perspective-matrix mv-matrix))
-      (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4))))
+    (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
+    (let [square-rotation (/ (:last-rendered state) 1000)
+          perspective-matrix (-> (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
+                                 (.toArray)
+                                 (js->clj))
+          mv-matrix (-> (.createIdentityMatrix Matrix 4)
+                        (.multiply (translation-matrix -0.0 0.0 -6.0))
+                        (.multiply (rotate-x-matrix square-rotation))
+                        (.toArray)
+                        (js->clj))
+          bindings (gd/bind driver program (get-program-data perspective-matrix mv-matrix (:vertices square) (:colors square)))]
+      (gd/draw-arrays driver bindings {:draw-mode :triangle-strip}))))
 
 (defn animate [draw-fn step-fn current-value]
   (let [cb (fn [t]
@@ -136,24 +101,14 @@
     (js/cancelAnimationFrame @anim-loop))
   (let [canvas (.getElementById js/document "scene")
         gl (.getContext canvas "webgl")
-        v-buffer (init-vertex-buffer gl)
-        color-buffer (init-vertex-color-buffer gl)
-        program (init-shaders
-                  gl
-                  (set-shader gl :vertex vertex-shader)
-                  (set-shader gl :fragment fragment-shader))
-        a-vertex-position (.getAttribLocation gl program "aVertexPosition")
-        a-vertex-color (.getAttribLocation gl program "aVertexColor")]
+        driver (driver/basic-driver gl)
+        program (gd/program driver program-source)]
     (doto gl
       (.clearColor 0.0 0.0 0.0 1.0)
       (.clearDepth 1.0)
       (.enable (.-DEPTH_TEST gl))
-      (.depthFunc (.-LEQUAL gl))
-      (.enableVertexAttribArray a-vertex-color)
-      (.enableVertexAttribArray a-vertex-position))
-    (reset! vertex-buffer v-buffer)
-    (reset! vertex-color-buffer color-buffer)
-    (animate (draw-scene gl program) tick initial-app-state)))
+      (.depthFunc (.-LEQUAL gl)))
+    (animate (draw-scene gl driver program) tick initial-app-state)))
 
 (main)
 
