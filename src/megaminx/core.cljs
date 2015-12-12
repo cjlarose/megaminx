@@ -8,7 +8,7 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (atom {:last-rendered nil}))
+(defonce app-state (atom {:last-rendered 0}))
 
 (defonce vertex-buffer (atom nil))
 (defonce vertex-color-buffer (atom nil))
@@ -128,8 +128,7 @@
         (animate draw-fn step-fn next-value)))))
 
 (defn tick [t state]
-  (let [t-now (.getTime (js/Date.))]
-    (assoc state :last-rendered t-now)))
+  (assoc state :last-rendered t))
 
 (defn main []
   (let [canvas (.getElementById js/document "scene")
