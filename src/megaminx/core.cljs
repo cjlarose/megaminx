@@ -8,7 +8,7 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (atom {:last-rendered 0}))
+(def initial-app-state {:last-rendered 0})
 (defonce anim-loop (atom nil))
 
 (defonce vertex-buffer (atom nil))
@@ -153,7 +153,7 @@
       (.enableVertexAttribArray a-vertex-position))
     (reset! vertex-buffer v-buffer)
     (reset! vertex-color-buffer color-buffer)
-    (animate (draw-scene gl program) tick @app-state)))
+    (animate (draw-scene gl program) tick initial-app-state)))
 
 (main)
 
