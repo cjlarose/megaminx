@@ -54,15 +54,15 @@
 
 (defn translation-matrix [dx dy dz]
   (doto (.createIdentityMatrix Matrix 4)
-    (.setValueAt 0 3 dx)
-    (.setValueAt 1 3 dy)
-    (.setValueAt 2 3 dz)))
+    (.setValueAt 3 0 dx)
+    (.setValueAt 3 1 dy)
+    (.setValueAt 3 2 dz)))
 
 (defn rotate-x-matrix [angle]
   (doto (.createIdentityMatrix Matrix 4)
     (.setValueAt 1 1 (js/Math.cos angle))
-    (.setValueAt 1 2 (- (js/Math.sin angle)))
-    (.setValueAt 2 1 (js/Math.sin angle))
+    (.setValueAt 2 1 (- (js/Math.sin angle)))
+    (.setValueAt 1 2 (js/Math.sin angle))
     (.setValueAt 2 2 (js/Math.cos angle))))
 
 (defn get-program-data [p mv vertices colors]
@@ -71,20 +71,17 @@
    a-position vertices
    a-vertex-color colors})
 
-(defn flatten-matrix [m]
-  (.apply js/Array.prototype.concat (js/Array.) (.toArray (.getTranspose (Matrix. (.toArray m))))))
-
 (defn draw-scene [gl driver program]
   (fn [state]
     (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
     (let [square-rotation (/ (:last-rendered state) 1000)
           perspective-matrix (-> (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
-                                 (flatten-matrix)
+                                 (.toArray)
                                  (js->clj))
           mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                        (.multiply (translation-matrix -0.0 0.0 -6.0))
                         (.multiply (rotate-x-matrix square-rotation))
-                        (flatten-matrix)
+                        (.multiply (translation-matrix -0.0 0.0 -6.0))
+                        (.toArray)
                         (js->clj))
           bindings (gd/bind driver program (get-program-data perspective-matrix mv-matrix (:vertices square) (:colors square)))]
       (gd/draw-arrays driver bindings {:draw-mode :triangle-strip}))))
