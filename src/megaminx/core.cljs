@@ -9,6 +9,7 @@
 ;; define your app data so that it doesn't get over-written on reload
 
 (defonce app-state (atom {:last-rendered 0}))
+(defonce anim-loop (atom nil))
 
 (defonce vertex-buffer (atom nil))
 (defonce vertex-color-buffer (atom nil))
@@ -121,16 +122,18 @@
       (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4))))
 
 (defn animate [draw-fn step-fn current-value]
-  (js/requestAnimationFrame
-    (fn [t]
-      (let [next-value (step-fn t current-value)]
-        (draw-fn next-value)
-        (animate draw-fn step-fn next-value)))))
+  (let [cb (fn [t]
+             (let [next-value (step-fn t current-value)]
+               (draw-fn next-value)
+               (animate draw-fn step-fn next-value)))]
+    (reset! anim-loop (js/requestAnimationFrame cb))))
 
 (defn tick [t state]
   (assoc state :last-rendered t))
 
 (defn main []
+  (if @anim-loop
+    (js/cancelAnimationFrame @anim-loop))
   (let [canvas (.getElementById js/document "scene")
         gl (.getContext canvas "webgl")
         v-buffer (init-vertex-buffer gl)
