@@ -1,6 +1,5 @@
 (ns megaminx.core
-  (:require [reagent.core :as reagent :refer [atom]]
-            [megaminx.gl-util :as gl-util])
+  (:require [megaminx.gl-util :as gl-util])
   (:import goog.math.Matrix))
 
 (enable-console-print!)
@@ -9,14 +8,10 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defonce app-state (atom {:rotate-y "Hello world!"
-                          :rotate-x ""}))
+(defonce app-state (atom {:last-rendered nil}))
 
-(defonce gl-context (atom nil))
 (defonce vertex-buffer (atom nil))
 (defonce vertex-color-buffer (atom nil))
-(defonce gl-program (atom nil))
-(defonce t (atom (js/Date.)))
 
 (def vertex-shader
   "attribute vec3 aVertexPosition;
@@ -108,26 +103,36 @@
       (.uniformMatrix4fv p-uniform false (js/Float32Array. (flatten-matrix perspective-matrix)))
       (.uniformMatrix4fv mv-uniform false (js/Float32Array. (flatten-matrix mv-matrix))))))
 
-(defn on-update [component]
-  (let [gl @gl-context
-        vertex-pos (.getAttribLocation gl @gl-program "aVertexPosition")
-        vertex-color (.getAttribLocation gl @gl-program "aVertexColor")
-        square-rotation (/ @t 1000)]
-    (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
-    (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-buffer)
-    (.vertexAttribPointer gl vertex-pos 3 (.-FLOAT gl) false 0 0)
-    (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-color-buffer)
-    (.vertexAttribPointer gl vertex-color 4 (.-FLOAT gl) false 0 0)
-    (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
-          mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                        (.multiply (translation-matrix -0.0 0.0 -6.0))
-                        (.multiply (rotate-x-matrix square-rotation)))]
-      (set-matrix-uniforms gl @gl-program perspective-matrix mv-matrix))
-    (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4)
-    (reset! t (js/Date.))))
+(defn draw-scene [gl gl-program]
+  (fn [state]
+    (let [vertex-pos (.getAttribLocation gl gl-program "aVertexPosition")
+          vertex-color (.getAttribLocation gl gl-program "aVertexColor")
+          square-rotation (/ (:last-rendered state) 1000)]
+      (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
+      (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-buffer)
+      (.vertexAttribPointer gl vertex-pos 3 (.-FLOAT gl) false 0 0)
+      (.bindBuffer gl (.-ARRAY_BUFFER gl) @vertex-color-buffer)
+      (.vertexAttribPointer gl vertex-color 4 (.-FLOAT gl) false 0 0)
+      (let [perspective-matrix (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
+            mv-matrix (-> (.createIdentityMatrix Matrix 4)
+                          (.multiply (translation-matrix -0.0 0.0 -6.0))
+                          (.multiply (rotate-x-matrix square-rotation)))]
+        (set-matrix-uniforms gl gl-program perspective-matrix mv-matrix))
+      (.drawArrays gl (.-TRIANGLE_STRIP gl) 0 4))))
 
-(defn on-mount [component]
-  (let [canvas (reagent/dom-node component)
+(defn animate [draw-fn step-fn current-value]
+  (js/requestAnimationFrame
+    (fn [t]
+      (let [next-value (step-fn t current-value)]
+        (draw-fn next-value)
+        (animate draw-fn step-fn next-value)))))
+
+(defn tick [t state]
+  (let [t-now (.getTime (js/Date.))]
+    (assoc state :last-rendered t-now)))
+
+(defn main []
+  (let [canvas (.getElementById js/document "scene")
         gl (.getContext canvas "webgl")
         v-buffer (init-vertex-buffer gl)
         color-buffer (init-vertex-color-buffer gl)
@@ -144,20 +149,11 @@
       (.depthFunc (.-LEQUAL gl))
       (.enableVertexAttribArray a-vertex-color)
       (.enableVertexAttribArray a-vertex-position))
-    (reset! gl-context gl)
-    (reset! gl-program program)
     (reset! vertex-buffer v-buffer)
     (reset! vertex-color-buffer color-buffer)
-    (reset! t (js/Date.))))
+    (animate (draw-scene gl program) tick @app-state)))
 
-(defn scene []
-  [:canvas {:width 640
-            :height 480} @t])
-
-(reagent/render-component [(with-meta scene {:component-did-mount on-mount
-                                             :component-did-update on-update})]
-                          (. js/document (getElementById "app")))
-
+(main)
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
