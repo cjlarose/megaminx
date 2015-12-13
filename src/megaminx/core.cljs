@@ -187,8 +187,8 @@
 (defn tick [t state]
   (let [old-t (:last-rendered state)
         dt (- t old-t)
-        dx (* dt 0.0002)
-        dy (* dt 0.001)]
+        dx (* (js/Math.sin (* t 0.001)) 0.1)
+        dy (* (js/Math.cos (* t 0.001)) 0.01)]
     (-> state
         (update :rot-x + dx)
         (update :rot-y + dy)
