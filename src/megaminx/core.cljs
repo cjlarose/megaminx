@@ -1,6 +1,5 @@
 (ns megaminx.core
-  (:require [megaminx.gl-util :as gl-util]
-            [gamma.api :as g]
+  (:require [gamma.api :as g]
             [gamma.program :as p]
             [gamma-driver.api :as gd]
             [gamma-driver.drivers.basic :as driver]
