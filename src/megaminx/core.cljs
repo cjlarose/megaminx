@@ -62,7 +62,7 @@
         polar-coords (concat l0 l1 l2)
         cart-coords (map ->cartesian polar-coords)
         [b g l h c a k q m d f p r i e] cart-coords
-        faces [[a b c d e] [k g b a f] [q l g k p] [m h l q r] [d c h m i]]]
+        faces [[a b c d e] [k g b a f] [q l g k p] [m h l q r] [d c h m i] [l h c b g]]]
     (tu/into-mesh (gmesh/gmesh) gmesh/add-face faces)))
 
 (defn dodecahedron-buffers [s]
@@ -94,7 +94,10 @@
                      magenta magenta magenta
                      red red red
                      green green green
-                     cyan cyan cyan]
+                     cyan cyan cyan
+                     white white white
+                     white white white
+                     white white white]
               :immutable? true}}))
 
 (defn get-program-data [p mv vertices colors]
