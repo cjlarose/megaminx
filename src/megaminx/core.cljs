@@ -13,6 +13,7 @@
 ;; define your app data so that it doesn't get over-written on reload
 
 (def initial-app-state {:last-rendered 0
+                        :translate-z -8.0
                         :rot-x 0
                         :rot-y 0})
 (defonce anim-loop (atom nil))
@@ -171,7 +172,7 @@
           mv-matrix (-> (.createIdentityMatrix Matrix 4)
                         (.multiply (rotate-x-matrix (:rot-x state)))
                         (.multiply (rotate-y-matrix (:rot-y state)))
-                        (.multiply (translation-matrix -0.0 0.0 -6.0))
+                        (.multiply (translation-matrix -0.0 0.0 (:translate-z state)))
                         (.toArray)
                         (js->clj))
           bindings (gd/bind driver program (get-program-data perspective-matrix mv-matrix (:vertices square) (:colors square)))]
@@ -187,11 +188,13 @@
 (defn tick [t state]
   (let [old-t (:last-rendered state)
         dt (- t old-t)
+        d-translate-z (* (js/Math.sin (* t 0.001)) 0.05)
         dx (* (js/Math.sin (* t 0.001)) 0.1)
         dy (* (js/Math.sin (* t 0.001)) 0.01)]
     (-> state
         (update :rot-x + dx)
         (update :rot-y + dy)
+        (update :translate-z + d-translate-z)
         (assoc :last-rendered t))))
 
 (defn main []
