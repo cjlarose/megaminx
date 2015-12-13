@@ -59,20 +59,33 @@
         l0 (map #(vector r (* 2 theta) (* % central-angle)) (range 5))
         l1 (map #(vector r (* 4 theta) (* % central-angle)) (range 5))
         l2 (map #(vector r (* 5 theta) (+ (* % central-angle) (/ central-angle 2))) (range 5))
-        polar-coords (concat l0 l1 l2)
+        l3 (map #(vector r (* 7 theta) (+ (* % central-angle) (/ central-angle 2))) (range 5))
+        polar-coords (concat l0 l1 l2 l3)
         cart-coords (map ->cartesian polar-coords)
-        [b g l h c a k q m d f p r i e] cart-coords
-        faces [[a b c d e] [k g b a f] [q l g k p] [m h l q r] [d c h m i] [l h c b g]]]
+        [b g l h c a k q m d f p r i e z t s n j] cart-coords
+        faces [[a b c d e] [k g b a f] [q l g k p] [m h l q r] [d c h m i] [l h c b g]
+               [z f a e j] [t p k f z] [s r q p t] [n i m r s] [j e d i n] [t z j n s]]]
     (tu/into-mesh (gmesh/gmesh) gmesh/add-face faces)))
 
+(defn ->color-vec [hex]
+  (let [f #(-> (apply str %)
+               (js/parseInt 16)
+               (/ 255))]
+    (map f (partition 2 hex))))
+
 (defn dodecahedron-buffers [s]
-  (let [blue         [0.0 0.0 1.0 1.0]
-        green        [0.0 1.0 0.0 1.0]
-        cyan         [0.0 1.0 1.0 1.0]
-        red          [1.0 0.0 0.0 1.0]
-        magenta      [1.0 0.0 1.0 1.0]
-        yellow       [1.0 1.0 0.0 1.0]
-        white        [1.0 1.0 1.0 1.0]]
+  (let [red         (->color-vec "F44336FF")
+        pink        (->color-vec "E91E63FF")
+        purple      (->color-vec "9C27B0FF")
+        deep-purple (->color-vec "673AB7FF")
+        indigo      (->color-vec "3F51B5FF")
+        blue        (->color-vec "2196F3FF")
+        light-blue  (->color-vec "03A9F4FF")
+        cyan        (->color-vec "00BCD4FF")
+        teal        (->color-vec "009688FF")
+        green       (->color-vec "4CAF50FF")
+        light-green (->color-vec "8BC34AFF")
+        lime        (->color-vec "CDDC39FF")]
     {:vertices {:id :dodecahedron-vertices
                 :data (->> (dodecahedron s)
                            (geom/tessellate)
@@ -80,24 +93,42 @@
                            (apply concat))
                 :immutable? true}
      :colors {:id :dodecahedron-colors
-              :data [blue blue blue
-                     green green green
-                     cyan cyan cyan
-                     red red red
-                     red red red
+              :data [red red red
+                     pink pink pink
+                     purple purple purple
+                     deep-purple deep-purple deep-purple
+                     indigo indigo indigo
                      blue blue blue
-                     magenta magenta magenta
+                     deep-purple deep-purple deep-purple
+                     light-blue light-blue light-blue
                      cyan cyan cyan
-                     blue blue blue
-                     magenta magenta magenta
+                     teal teal teal
                      green green green
-                     magenta magenta magenta
+                     teal teal teal
+                     light-blue light-blue light-blue
                      red red red
-                     green green green
+                     light-green light-green light-green
                      cyan cyan cyan
-                     white white white
-                     white white white
-                     white white white]
+                     red red red
+                     deep-purple deep-purple deep-purple
+                     green green green
+                     light-green light-green light-green
+                     indigo indigo indigo
+                     indigo indigo indigo
+                     blue blue blue
+                     lime lime lime
+                     light-green light-green light-green
+                     light-blue light-blue light-blue
+                     green green green
+                     lime lime lime
+                     pink pink pink
+                     purple purple purple
+                     teal teal teal
+                     pink pink pink
+                     lime lime lime
+                     purple purple purple
+                     blue blue blue
+                     cyan cyan cyan]
               :immutable? true}}))
 
 (defn get-program-data [p mv vertices colors]
@@ -110,7 +141,7 @@
   (fn [state]
     (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
     (let [rot-x (js/Math.sin (:rot-x state))
-          rot-y (js/Math.sin (:rot-y state))
+          rot-y (* 2 (js/Math.sin (:rot-y state)))
           translate-z (- (js/Math.sin (:translate-z state)) 6)
           buffers (dodecahedron-buffers 1)
           perspective-matrix (mat/perspective 45 (/ 640.0 480) 0.1 100.0)
