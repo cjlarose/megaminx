@@ -3,8 +3,9 @@
             [gamma.api :as g]
             [gamma.program :as p]
             [gamma-driver.api :as gd]
-            [gamma-driver.drivers.basic :as driver])
-  (:import goog.math.Matrix))
+            [gamma-driver.drivers.basic :as driver]
+            [thi.ng.geom.core :as geom]
+            [thi.ng.geom.core.matrix :as mat]))
 
 (enable-console-print!)
 
@@ -132,30 +133,6 @@
                      bottom-color]
               :immutable? true}}))
 
-(defn translation-matrix [dx dy dz]
-  (doto (.createIdentityMatrix Matrix 4)
-    (.setValueAt 3 0 dx)
-    (.setValueAt 3 1 dy)
-    (.setValueAt 3 2 dz)))
-
-(defn rotate-x-matrix [angle]
-  (let [c (js/Math.cos angle)
-        s (js/Math.sin angle)]
-    (doto (.createIdentityMatrix Matrix 4)
-      (.setValueAt 1 1 c)
-      (.setValueAt 2 1 (- s))
-      (.setValueAt 1 2 s)
-      (.setValueAt 2 2 c))))
-
-(defn rotate-y-matrix [angle]
-  (let [c (js/Math.cos angle)
-        s (js/Math.sin angle)]
-    (doto (.createIdentityMatrix Matrix 4)
-      (.setValueAt 0 0 c)
-      (.setValueAt 0 2 s)
-      (.setValueAt 2 0 (- s))
-      (.setValueAt 2 2 c))))
-
 (defn get-program-data [p mv vertices colors]
   {u-p-matrix p
    u-mv-matrix mv
@@ -169,15 +146,11 @@
           rot-y (js/Math.sin (:rot-y state))
           translate-z (- (js/Math.sin (:translate-z state)) 6)
           square (rectangular-prism 2 2.5 1.5)
-          perspective-matrix (-> (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
-                                 (.toArray)
-                                 (js->clj))
-          mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                        (.multiply (rotate-x-matrix rot-x))
-                        (.multiply (rotate-y-matrix rot-y))
-                        (.multiply (translation-matrix -0.0 0.0 translate-z))
-                        (.toArray)
-                        (js->clj))
+          perspective-matrix (mat/perspective 45 (/ 640.0 480) 0.1 100.0)
+          mv-matrix (-> (mat/matrix44)
+                        (geom/translate [0 0 translate-z])
+                        (geom/rotate-x rot-x)
+                        (geom/rotate-y rot-y))
           bindings (gd/bind driver program (get-program-data perspective-matrix mv-matrix (:vertices square) (:colors square)))]
       (gd/draw-arrays driver bindings {:draw-mode :triangles}))))
 
