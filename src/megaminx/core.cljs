@@ -12,7 +12,9 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(def initial-app-state {:last-rendered 0})
+(def initial-app-state {:last-rendered 0
+                        :rot-x 0
+                        :rot-y 0})
 (defonce anim-loop (atom nil))
 
 (def u-p-matrix
@@ -162,15 +164,13 @@
 (defn draw-scene [gl driver program]
   (fn [state]
     (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
-    (let [square-x-rotation (/ (:last-rendered state) 1000)
-          square-y-rotation (/ (:last-rendered state) 2000)
-          square (rectangular-prism 2 2.5 1.5)
+    (let [square (rectangular-prism 2 2.5 1.5)
           perspective-matrix (-> (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
                                  (.toArray)
                                  (js->clj))
           mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                        (.multiply (rotate-x-matrix square-x-rotation))
-                        (.multiply (rotate-y-matrix square-y-rotation))
+                        (.multiply (rotate-x-matrix (:rot-x state)))
+                        (.multiply (rotate-y-matrix (:rot-y state)))
                         (.multiply (translation-matrix -0.0 0.0 -6.0))
                         (.toArray)
                         (js->clj))
@@ -185,7 +185,14 @@
     (reset! anim-loop (js/requestAnimationFrame cb))))
 
 (defn tick [t state]
-  (assoc state :last-rendered t))
+  (let [old-t (:last-rendered state)
+        dt (- t old-t)
+        dx (* dt 0.0002)
+        dy (* dt 0.001)]
+    (-> state
+        (update :rot-x + dx)
+        (update :rot-y + dy)
+        (assoc :last-rendered t))))
 
 (defn main []
   (if @anim-loop
