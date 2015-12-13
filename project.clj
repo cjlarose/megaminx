@@ -10,6 +10,7 @@
                  [reagent "0.5.0"]
                  [kovasb/gamma "0.0-135"]
                  [kovasb/gamma-driver "0.0-49"]
+                 [thi.ng/math "0.1.4"]
                  [thi.ng/geom "0.0.908"]]
 
   :plugins [[lein-cljsbuild "1.1.1"]

@@ -3,8 +3,11 @@
             [gamma.program :as p]
             [gamma-driver.api :as gd]
             [gamma-driver.drivers.basic :as driver]
+            [thi.ng.math.core :as math]
             [thi.ng.geom.core :as geom]
             [thi.ng.geom.core.matrix :as mat]
+            [thi.ng.geom.gmesh :as gmesh]
+            [thi.ng.geom.types.utils :as tu]
             [thi.ng.geom.aabb :refer [aabb]]))
 
 (enable-console-print!)
@@ -42,59 +45,55 @@
                      v-color a-vertex-color}
      :fragment-shader {(g/gl-frag-color) v-color}}))
 
-(defn rectangular-prism [w h d]
-  (let [[x y z]      (map (partial * 0.5) [w h d])
-        front-color  [0.0 0.0 1.0 1.0]
-        back-color   [0.0 1.0 0.0 1.0]
-        right-color  [0.0 1.0 1.0 1.0]
-        left-color   [1.0 0.0 0.0 1.0]
-        top-color    [1.0 0.0 1.0 1.0]
-        bottom-color [1.0 1.0 0.0 1.0]]
-    {:vertices {:id :prism-vertices
-                :data (->> (aabb w h d)
-                           (geom/center)
-                           (geom/as-mesh)
+(def ^:const τ math/TWO_PI)
+
+(defn dodecahedron [s]
+  (let [r (* math/SQRT3 math/PHI s 0.5)
+        theta (js/Math.asin (/ (* math/SQRT3 math/PHI)))
+        central-angle (/ τ 5)
+        l0 (map #(vector r theta (* % central-angle)) (range 5))
+        l1 (map #(vector r (* 3 theta) (* % central-angle)) (range 5))
+        l2 (map #(vector r (* 4 theta) (+ (* % central-angle) (/ central-angle 2))) (range 5))
+        polar-coords (concat l0 l1 l2)
+        cart-coords (map (fn [[r theta phi]]
+                           [(* r (js/Math.sin theta) (js/Math.cos phi))
+                            (* r (js/Math.sin theta) (js/Math.sin phi))
+                            (* r (js/Math.cos theta))])
+                         polar-coords)
+        [b g l h c a k q m d f p r i e] cart-coords
+        faces [[a b c d e] [k g b a f] [q l g k p] [m h l q r] [d c h m i]]]
+    (tu/into-mesh (gmesh/gmesh) gmesh/add-face faces)))
+
+(defn dodecahedron-buffers [s]
+  (let [blue         [0.0 0.0 1.0 1.0]
+        green        [0.0 1.0 0.0 1.0]
+        cyan         [0.0 1.0 1.0 1.0]
+        red          [1.0 0.0 0.0 1.0]
+        magenta      [1.0 0.0 1.0 1.0]
+        yellow       [1.0 1.0 0.0 1.0]
+        white        [1.0 1.0 1.0 1.0]]
+    {:vertices {:id :dodecahedron-vertices
+                :data (->> (dodecahedron s)
                            (geom/tessellate)
                            (geom/faces)
                            (apply concat))
                 :immutable? true}
-     :colors {:id :prism-colors
-              :data [back-color
-                     back-color
-                     back-color
-                     top-color
-                     top-color
-                     top-color
-                     right-color
-                     right-color
-                     right-color
-                     top-color
-                     top-color
-                     top-color
-                     left-color
-                     left-color
-                     left-color
-                     right-color
-                     right-color
-                     right-color
-                     front-color
-                     front-color
-                     front-color
-                     back-color
-                     back-color
-                     back-color
-                     bottom-color
-                     bottom-color
-                     bottom-color
-                     bottom-color
-                     bottom-color
-                     bottom-color
-                     left-color
-                     left-color
-                     left-color
-                     front-color
-                     front-color
-                     front-color]
+     :colors {:id :dodecahedron-colors
+              :data [blue blue blue
+                     green green green
+                     cyan cyan cyan
+                     red red red
+                     red red red
+                     blue blue blue
+                     red red red
+                     cyan cyan cyan
+                     magenta magenta magenta
+                     green green green
+                     blue blue blue
+                     green green green
+                     magenta magenta magenta
+                     cyan cyan cyan
+                     magenta magenta magenta]
               :immutable? true}}))
 
 (defn get-program-data [p mv vertices colors]
@@ -109,13 +108,18 @@
     (let [rot-x (js/Math.sin (:rot-x state))
           rot-y (js/Math.sin (:rot-y state))
           translate-z (- (js/Math.sin (:translate-z state)) 6)
-          square (rectangular-prism 2 2.5 1.5)
+          buffers (dodecahedron-buffers 1)
           perspective-matrix (mat/perspective 45 (/ 640.0 480) 0.1 100.0)
           mv-matrix (-> (mat/matrix44)
                         (geom/translate [0 0 translate-z])
                         (geom/rotate-x rot-x)
                         (geom/rotate-y rot-y))
-          bindings (gd/bind driver program (get-program-data perspective-matrix mv-matrix (:vertices square) (:colors square)))]
+          program-data (get-program-data
+                         perspective-matrix
+                         mv-matrix
+                         (:vertices buffers)
+                         (:colors buffers))
+          bindings (gd/bind driver program program-data)]
       (gd/draw-arrays driver bindings {:draw-mode :triangles}))))
 
 (defn animate [draw-fn step-fn current-value]
