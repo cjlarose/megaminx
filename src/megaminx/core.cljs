@@ -136,11 +136,22 @@
     (.setValueAt 3 2 dz)))
 
 (defn rotate-x-matrix [angle]
-  (doto (.createIdentityMatrix Matrix 4)
-    (.setValueAt 1 1 (js/Math.cos angle))
-    (.setValueAt 2 1 (- (js/Math.sin angle)))
-    (.setValueAt 1 2 (js/Math.sin angle))
-    (.setValueAt 2 2 (js/Math.cos angle))))
+  (let [c (js/Math.cos angle)
+        s (js/Math.sin angle)]
+    (doto (.createIdentityMatrix Matrix 4)
+      (.setValueAt 1 1 c)
+      (.setValueAt 2 1 (- s))
+      (.setValueAt 1 2 s)
+      (.setValueAt 2 2 c))))
+
+(defn rotate-y-matrix [angle]
+  (let [c (js/Math.cos angle)
+        s (js/Math.sin angle)]
+    (doto (.createIdentityMatrix Matrix 4)
+      (.setValueAt 0 0 c)
+      (.setValueAt 0 2 s)
+      (.setValueAt 2 0 (- s))
+      (.setValueAt 2 2 c))))
 
 (defn get-program-data [p mv vertices colors]
   {u-p-matrix p
@@ -151,13 +162,15 @@
 (defn draw-scene [gl driver program]
   (fn [state]
     (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
-    (let [square-rotation (/ (:last-rendered state) 1000)
+    (let [square-x-rotation (/ (:last-rendered state) 1000)
+          square-y-rotation (/ (:last-rendered state) 2000)
           square (rectangular-prism 2 2.5 1.5)
           perspective-matrix (-> (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
                                  (.toArray)
                                  (js->clj))
           mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                        (.multiply (rotate-x-matrix square-rotation))
+                        (.multiply (rotate-x-matrix square-x-rotation))
+                        (.multiply (rotate-y-matrix square-y-rotation))
                         (.multiply (translation-matrix -0.0 0.0 -6.0))
                         (.toArray)
                         (js->clj))
