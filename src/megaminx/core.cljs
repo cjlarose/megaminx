@@ -51,9 +51,9 @@
   (let [r (* math/SQRT3 math/PHI s 0.5)
         theta (js/Math.asin (/ (* math/SQRT3 math/PHI)))
         central-angle (/ τ 5)
-        l0 (map #(vector r theta (* % central-angle)) (range 5))
-        l1 (map #(vector r (* 3 theta) (* % central-angle)) (range 5))
-        l2 (map #(vector r (* 4 theta) (+ (* % central-angle) (/ central-angle 2))) (range 5))
+        l0 (map #(vector r (* 2 theta) (* % central-angle)) (range 5))
+        l1 (map #(vector r (* 4 theta) (* % central-angle)) (range 5))
+        l2 (map #(vector r (* 5 theta) (+ (* % central-angle) (/ central-angle 2))) (range 5))
         polar-coords (concat l0 l1 l2)
         cart-coords (map (fn [[r theta phi]]
                            [(* r (js/Math.sin theta) (js/Math.cos phi))
@@ -83,17 +83,17 @@
                      green green green
                      cyan cyan cyan
                      red red red
-                     blue blue blue
                      red red red
                      blue blue blue
-                     green green green
-                     magenta magenta magenta
-                     green green green
-                     magenta magenta magenta
                      magenta magenta magenta
                      cyan cyan cyan
-                     cyan cyan cyan
-                     red red red]
+                     blue blue blue
+                     magenta magenta magenta
+                     green green green
+                     magenta magenta magenta
+                     red red red
+                     green green green
+                     cyan cyan cyan]
               :immutable? true}}))
 
 (defn get-program-data [p mv vertices colors]
