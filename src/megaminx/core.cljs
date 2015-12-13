@@ -38,19 +38,96 @@
                      v-color a-vertex-color}
      :fragment-shader {(g/gl-frag-color) v-color}}))
 
-(def square
-  {:vertices {:id :square-vertices
-              :data [[ 1.0  1.0 0.0]
-                     [-1.0  1.0 0.0]
-                     [ 1.0 -1.0 0.0]
-                     [-1.0 -1.0 0.0]]
-              :immutable? true}
-   :colors {:id :square-colors
-            :data [[1.0 1.0 1.0 1.0]
-                   [1.0 0.0 0.0 1.0]
-                   [0.0 1.0 0.0 1.0]
-                   [0.0 0.0 1.0 1.0]]
-            :immutable? true}})
+(defn rectangular-prism [w h d]
+  (let [[x y z]      (map (partial * 0.5) [w h d])
+        front-color  [0.0 0.0 1.0 1.0]
+        back-color   [0.0 1.0 0.0 1.0]
+        right-color  [0.0 1.0 1.0 1.0]
+        left-color   [1.0 0.0 0.0 1.0]
+        top-color    [1.0 0.0 1.0 1.0]
+        bottom-color [1.0 1.0 0.0 1.0]]
+    {:vertices {:id :prism-vertices
+                :data [;; front
+                       [x y z]
+                       [(- x) y z]
+                       [x (- y) z]
+                       [(- x) y z]
+                       [x (- y) z]
+                       [(- x) (- y) z]
+                       ;; back
+                       [x y (- z)]
+                       [(- x) y (- z)]
+                       [x (- y) (- z)]
+                       [(- x) y (- z)]
+                       [x (- y) (- z)]
+                       [(- x) (- y) (- z)]
+                       ;; right
+                       [x y (- z)]
+                       [x y z]
+                       [x (- y) (- z)]
+                       [x y z]
+                       [x (- y) (- z)]
+                       [x (- y) z]
+                       ;; left
+                       [(- x) y (- z)]
+                       [(- x) y z]
+                       [(- x) (- y) (- z)]
+                       [(- x) y z]
+                       [(- x) (- y) (- z)]
+                       [(- x) (- y) z]
+                       ;; top
+                       [x y (- z)]
+                       [(- x) y (- z)]
+                       [x y z]
+                       [(- x) y (- z)]
+                       [x y z]
+                       [(- x) y z]
+                       ;; bottom
+                       [x (- y) (- z)]
+                       [(- x) (- y) (- z)]
+                       [x (- y) z]
+                       [(- x) (- y) (- z)]
+                       [x (- y) z]
+                       [(- x) (- y) z]]
+                :immutable? true}
+     :colors {:id :prism-colors
+              :data [front-color
+                     front-color
+                     front-color
+                     front-color
+                     front-color
+                     front-color
+                     back-color
+                     back-color
+                     back-color
+                     back-color
+                     back-color
+                     back-color
+                     right-color
+                     right-color
+                     right-color
+                     right-color
+                     right-color
+                     right-color
+                     left-color
+                     left-color
+                     left-color
+                     left-color
+                     left-color
+                     left-color
+                     top-color
+                     top-color
+                     top-color
+                     top-color
+                     top-color
+                     top-color
+                     bottom-color
+                     bottom-color
+                     bottom-color
+                     bottom-color
+                     bottom-color
+                     bottom-color]
+              :immutable? true}}))
 
 (defn translation-matrix [dx dy dz]
   (doto (.createIdentityMatrix Matrix 4)
@@ -75,6 +152,7 @@
   (fn [state]
     (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
     (let [square-rotation (/ (:last-rendered state) 1000)
+          square (rectangular-prism 2 2.5 1.5)
           perspective-matrix (-> (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
                                  (.toArray)
                                  (js->clj))
@@ -84,7 +162,7 @@
                         (.toArray)
                         (js->clj))
           bindings (gd/bind driver program (get-program-data perspective-matrix mv-matrix (:vertices square) (:colors square)))]
-      (gd/draw-arrays driver bindings {:draw-mode :triangle-strip}))))
+      (gd/draw-arrays driver bindings {:draw-mode :triangles}))))
 
 (defn animate [draw-fn step-fn current-value]
   (let [cb (fn [t]
