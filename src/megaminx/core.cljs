@@ -13,7 +13,7 @@
 ;; define your app data so that it doesn't get over-written on reload
 
 (def initial-app-state {:last-rendered 0
-                        :translate-z -8.0
+                        :translate-z 0
                         :rot-x 0
                         :rot-y 0})
 (defonce anim-loop (atom nil))
@@ -165,14 +165,17 @@
 (defn draw-scene [gl driver program]
   (fn [state]
     (.clear gl (bit-or (.-COLOR_BUFFER_BIT gl) (.-DEPTH_BUFFER_BIT gl)))
-    (let [square (rectangular-prism 2 2.5 1.5)
+    (let [rot-x (js/Math.sin (:rot-x state))
+          rot-y (js/Math.sin (:rot-y state))
+          translate-z (- (js/Math.sin (:translate-z state)) 6)
+          square (rectangular-prism 2 2.5 1.5)
           perspective-matrix (-> (gl-util/make-perspective 45 (/ 640.0 480) 0.1 100.0)
                                  (.toArray)
                                  (js->clj))
           mv-matrix (-> (.createIdentityMatrix Matrix 4)
-                        (.multiply (rotate-x-matrix (:rot-x state)))
-                        (.multiply (rotate-y-matrix (:rot-y state)))
-                        (.multiply (translation-matrix -0.0 0.0 (:translate-z state)))
+                        (.multiply (rotate-x-matrix rot-x))
+                        (.multiply (rotate-y-matrix rot-y))
+                        (.multiply (translation-matrix -0.0 0.0 translate-z))
                         (.toArray)
                         (js->clj))
           bindings (gd/bind driver program (get-program-data perspective-matrix mv-matrix (:vertices square) (:colors square)))]
@@ -188,9 +191,9 @@
 (defn tick [t state]
   (let [old-t (:last-rendered state)
         dt (- t old-t)
-        d-translate-z (* (js/Math.sin (* t 0.001)) 0.05)
-        dx (* (js/Math.sin (* t 0.001)) 0.1)
-        dy (* (js/Math.sin (* t 0.001)) 0.01)]
+        d-translate-z (* dt 0.001)
+        dx (* dt 0.002)
+        dy (* dt 0.001)]
     (-> state
         (update :rot-x + dx)
         (update :rot-y + dy)
