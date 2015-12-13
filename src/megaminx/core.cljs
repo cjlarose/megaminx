@@ -59,42 +59,42 @@
                            (apply concat))
                 :immutable? true}
      :colors {:id :prism-colors
-              :data [front-color
+              :data [back-color
+                     back-color
+                     back-color
+                     top-color
+                     top-color
+                     top-color
+                     right-color
+                     right-color
+                     right-color
+                     top-color
+                     top-color
+                     top-color
+                     left-color
+                     left-color
+                     left-color
+                     right-color
+                     right-color
+                     right-color
                      front-color
                      front-color
                      front-color
-                     front-color
-                     front-color
                      back-color
                      back-color
                      back-color
-                     back-color
-                     back-color
-                     back-color
-                     right-color
-                     right-color
-                     right-color
-                     right-color
-                     right-color
-                     right-color
-                     left-color
-                     left-color
-                     left-color
-                     left-color
-                     left-color
-                     left-color
-                     top-color
-                     top-color
-                     top-color
-                     top-color
-                     top-color
-                     top-color
                      bottom-color
                      bottom-color
                      bottom-color
                      bottom-color
                      bottom-color
-                     bottom-color]
+                     bottom-color
+                     left-color
+                     left-color
+                     left-color
+                     front-color
+                     front-color
+                     front-color]
               :immutable? true}}))
 
 (defn get-program-data [p mv vertices colors]
