@@ -47,6 +47,11 @@
 
 (def ^:const τ math/TWO_PI)
 
+(defn ->cartesian [[r theta phi]]
+  [(* r (js/Math.sin theta) (js/Math.cos phi))
+   (* r (js/Math.sin theta) (js/Math.sin phi))
+   (* r (js/Math.cos theta))])
+
 (defn dodecahedron [s]
   (let [r (* math/SQRT3 math/PHI s 0.5)
         theta (js/Math.asin (/ (* math/SQRT3 math/PHI)))
@@ -55,11 +60,7 @@
         l1 (map #(vector r (* 4 theta) (* % central-angle)) (range 5))
         l2 (map #(vector r (* 5 theta) (+ (* % central-angle) (/ central-angle 2))) (range 5))
         polar-coords (concat l0 l1 l2)
-        cart-coords (map (fn [[r theta phi]]
-                           [(* r (js/Math.sin theta) (js/Math.cos phi))
-                            (* r (js/Math.sin theta) (js/Math.sin phi))
-                            (* r (js/Math.cos theta))])
-                         polar-coords)
+        cart-coords (map ->cartesian polar-coords)
         [b g l h c a k q m d f p r i e] cart-coords
         faces [[a b c d e] [k g b a f] [q l g k p] [m h l q r] [d c h m i]]]
     (tu/into-mesh (gmesh/gmesh) gmesh/add-face faces)))
