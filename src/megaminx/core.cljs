@@ -47,6 +47,8 @@
 
 (def ^:const τ math/TWO_PI)
 
+;; spherical coordinates are in the physics convention
+;; (radial distance, polar angle, azimuthal)
 (defn ->cartesian [[r theta phi]]
   [(* r (js/Math.sin theta) (js/Math.cos phi))
    (* r (js/Math.sin theta) (js/Math.sin phi))
@@ -60,8 +62,8 @@
         l1 (map #(vector r (* 4 theta) (* % central-angle)) (range 5))
         l2 (map #(vector r (* 5 theta) (+ (* % central-angle) (/ central-angle 2))) (range 5))
         l3 (map #(vector r (* 7 theta) (+ (* % central-angle) (/ central-angle 2))) (range 5))
-        polar-coords (concat l0 l1 l2 l3)
-        cart-coords (map ->cartesian polar-coords)
+        spherical-coords (concat l0 l1 l2 l3)
+        cart-coords (map ->cartesian spherical-coords)
         [b g l h c a k q m d f p r i e z t s n j] cart-coords
         faces [[a b c d e] [k g b a f] [q l g k p] [m h l q r] [d c h m i] [l h c b g]
                [z f a e j] [t p k f z] [s r q p t] [n i m r s] [j e d i n] [t z j n s]]]
