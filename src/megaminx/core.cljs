@@ -4,7 +4,8 @@
             [gamma-driver.api :as gd]
             [gamma-driver.drivers.basic :as driver]
             [thi.ng.geom.core :as geom]
-            [thi.ng.geom.core.matrix :as mat]))
+            [thi.ng.geom.core.matrix :as mat]
+            [thi.ng.geom.aabb :refer [aabb]]))
 
 (enable-console-print!)
 
@@ -50,48 +51,12 @@
         top-color    [1.0 0.0 1.0 1.0]
         bottom-color [1.0 1.0 0.0 1.0]]
     {:vertices {:id :prism-vertices
-                :data [;; front
-                       [x y z]
-                       [(- x) y z]
-                       [x (- y) z]
-                       [(- x) y z]
-                       [x (- y) z]
-                       [(- x) (- y) z]
-                       ;; back
-                       [x y (- z)]
-                       [(- x) y (- z)]
-                       [x (- y) (- z)]
-                       [(- x) y (- z)]
-                       [x (- y) (- z)]
-                       [(- x) (- y) (- z)]
-                       ;; right
-                       [x y (- z)]
-                       [x y z]
-                       [x (- y) (- z)]
-                       [x y z]
-                       [x (- y) (- z)]
-                       [x (- y) z]
-                       ;; left
-                       [(- x) y (- z)]
-                       [(- x) y z]
-                       [(- x) (- y) (- z)]
-                       [(- x) y z]
-                       [(- x) (- y) (- z)]
-                       [(- x) (- y) z]
-                       ;; top
-                       [x y (- z)]
-                       [(- x) y (- z)]
-                       [x y z]
-                       [(- x) y (- z)]
-                       [x y z]
-                       [(- x) y z]
-                       ;; bottom
-                       [x (- y) (- z)]
-                       [(- x) (- y) (- z)]
-                       [x (- y) z]
-                       [(- x) (- y) (- z)]
-                       [x (- y) z]
-                       [(- x) (- y) z]]
+                :data (->> (aabb w h d)
+                           (geom/center)
+                           (geom/as-mesh)
+                           (geom/tessellate)
+                           (geom/faces)
+                           (apply concat))
                 :immutable? true}
      :colors {:id :prism-colors
               :data [front-color
