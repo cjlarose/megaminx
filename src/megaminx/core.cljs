@@ -83,17 +83,17 @@
                      green green green
                      cyan cyan cyan
                      red red red
-                     red red red
                      blue blue blue
                      red red red
-                     cyan cyan cyan
-                     magenta magenta magenta
-                     green green green
                      blue blue blue
                      green green green
                      magenta magenta magenta
+                     green green green
+                     magenta magenta magenta
+                     magenta magenta magenta
                      cyan cyan cyan
-                     magenta magenta magenta]
+                     cyan cyan cyan
+                     red red red]
               :immutable? true}}))
 
 (defn get-program-data [p mv vertices colors]
