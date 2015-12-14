@@ -5,6 +5,8 @@
             [gamma-driver.drivers.basic :as driver]
             [thi.ng.math.core :as math]
             [thi.ng.geom.core :as geom]
+            [thi.ng.geom.core.utils :as gu]
+            [thi.ng.geom.core.vector :refer [vec3]]
             [thi.ng.geom.core.matrix :as mat]
             [thi.ng.geom.gmesh :as gmesh]
             [thi.ng.geom.types.utils :as tu]
@@ -45,6 +47,15 @@
                      v-color a-vertex-color}
      :fragment-shader {(g/gl-frag-color) v-color}}))
 
+;; used only in debugging
+(defn face-area [mesh]
+  (transduce
+    (comp
+      (map gu/tessellate-with-first)
+      (map (partial map #(->> % (apply gu/tri-area3) math/abs))))
+    conj
+    (geom/faces mesh)))
+
 (def ^:const τ math/TWO_PI)
 
 ;; spherical coordinates are in the physics convention
@@ -66,7 +77,7 @@
                         [r (* 7 theta) (+ a offset)]))
         spherical-coords (mapcat quad (range 5))
         cart-coords (map ->cartesian spherical-coords)
-        [b a f z g k p t l q r s h m i n c d e j] cart-coords
+        [b a f z g k p t l q r s h m i n c d e j] (map vec3 cart-coords)
         faces [[a b c d e] [k g b a f] [q l g k p] [m h l q r] [d c h m i] [l h c b g]
                [z f a e j] [t p k f z] [s r q p t] [n i m r s] [j e d i n] [t z j n s]]]
     (tu/into-mesh (gmesh/gmesh) gmesh/add-face faces)))
