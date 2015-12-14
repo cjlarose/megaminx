@@ -59,7 +59,7 @@
 (def ^:const τ math/TWO_PI)
 
 ;; spherical coordinates are in the physics convention
-;; (radial distance, polar angle, azimuthal)
+;; (radial distance, polar angle, azimuthal angle)
 (defn ->cartesian [[r theta phi]]
   [(* r (js/Math.sin theta) (js/Math.cos phi))
    (* r (js/Math.sin theta) (js/Math.sin phi))
