@@ -67,14 +67,18 @@
 
 (defn dodecahedron [s]
   (let [r (* math/SQRT3 math/PHI s 0.5)
-        theta (js/Math.asin (/ (* math/SQRT3 math/PHI)))
         central-angle (/ τ 5)
-        offset (* central-angle 0.5)
+        half-central-angle (* central-angle 0.5)
+        theta (* 2 (js/Math.asin (/ (* math/SQRT3 math/PHI)))) ;; central angle b/t dodecahedron vertices
+        polar-l0 (js/Math.asin (/ (* (js/Math.sin half-central-angle) math/SQRT3 math/PHI)))
+        polar-l1 (+ polar-l0 theta)
+        polar-l3 (- math/PI polar-l0)
+        polar-l2 (- polar-l3 theta)
         quad #(let [a (* % central-angle)]
-                (vector [r (* 2 theta) a]
-                        [r (* 4 theta) a]
-                        [r (* 5 theta) (+ a offset)]
-                        [r (* 7 theta) (+ a offset)]))
+                (vector [r polar-l0 a]
+                        [r polar-l1 a]
+                        [r polar-l2 (+ a half-central-angle)]
+                        [r polar-l3 (+ a half-central-angle)]))
         spherical-coords (mapcat quad (range 5))
         cart-coords (map ->cartesian spherical-coords)
         [b a f z g k p t l q r s h m i n c d e j] (map vec3 cart-coords)
