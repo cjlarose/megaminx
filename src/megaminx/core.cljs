@@ -74,11 +74,11 @@
         polar-l1 (+ polar-l0 theta)
         polar-l3 (- math/PI polar-l0)
         polar-l2 (- polar-l3 theta)
-        quad #(let [a (* % central-angle)]
-                (vector [r polar-l0 a]
-                        [r polar-l1 a]
-                        [r polar-l2 (+ a half-central-angle)]
-                        [r polar-l3 (+ a half-central-angle)]))
+        quad #(let [phi (* % central-angle)]
+                (vector [r polar-l0 phi]
+                        [r polar-l1 phi]
+                        [r polar-l2 (+ phi half-central-angle)]
+                        [r polar-l3 (+ phi half-central-angle)]))
         spherical-coords (mapcat quad (range 5))
         cart-coords (map ->cartesian spherical-coords)
         [b a f z g k p t l q r s h m i n c d e j] (map vec3 cart-coords)
