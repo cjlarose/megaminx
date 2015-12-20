@@ -6,11 +6,8 @@
             [thi.ng.math.core :as math]
             [thi.ng.geom.core :as geom]
             [thi.ng.geom.core.utils :as gu]
-            [thi.ng.geom.core.vector :refer [vec3]]
             [thi.ng.geom.core.matrix :as mat]
-            [thi.ng.geom.gmesh :as gmesh]
-            [thi.ng.geom.types.utils :as tu]
-            [thi.ng.geom.aabb :refer [aabb]]))
+            [thi.ng.geom.mesh.polyhedra :as poly]))
 
 (enable-console-print!)
 
@@ -56,36 +53,6 @@
     conj
     (geom/faces mesh)))
 
-(def ^:const τ math/TWO_PI)
-
-;; spherical coordinates are in the physics convention
-;; (radial distance, polar angle, azimuthal angle)
-(defn ->cartesian [[r theta phi]]
-  [(* r (js/Math.sin theta) (js/Math.cos phi))
-   (* r (js/Math.sin theta) (js/Math.sin phi))
-   (* r (js/Math.cos theta))])
-
-(defn dodecahedron [s]
-  (let [r (* math/SQRT3 math/PHI s 0.5)
-        central-angle (/ τ 5)
-        half-central-angle (* central-angle 0.5)
-        theta (* 2 (js/Math.asin (/ (* math/SQRT3 math/PHI)))) ;; central angle b/t dodecahedron vertices
-        polar-l0 (js/Math.asin (/ (* (js/Math.sin half-central-angle) math/SQRT3 math/PHI)))
-        polar-l1 (+ polar-l0 theta)
-        polar-l3 (- math/PI polar-l0)
-        polar-l2 (- polar-l3 theta)
-        quad #(let [phi (* % central-angle)]
-                (vector [r polar-l0 phi]
-                        [r polar-l1 phi]
-                        [r polar-l2 (+ phi half-central-angle)]
-                        [r polar-l3 (+ phi half-central-angle)]))
-        spherical-coords (mapcat quad (range 5))
-        cart-coords (map ->cartesian spherical-coords)
-        [b a f z g k p t l q r s h m i n c d e j] (map vec3 cart-coords)
-        faces [[a b c d e] [k g b a f] [q l g k p] [m h l q r] [d c h m i] [l h c b g]
-               [z f a e j] [t p k f z] [s r q p t] [n i m r s] [j e d i n] [t z j n s]]]
-    (tu/into-mesh (gmesh/gmesh) gmesh/add-face faces)))
-
 (defn ->color-vec [hex]
   (let [f #(-> (apply str %)
                (js/parseInt 16)
@@ -106,7 +73,7 @@
         light-green (->color-vec "8BC34AFF")
         lime        (->color-vec "CDDC39FF")]
     {:vertices {:id :dodecahedron-vertices
-                :data (->> (dodecahedron s)
+                :data (->> (poly/polyhedron-mesh poly/dodecahedron s)
                            (geom/tessellate)
                            (geom/faces)
                            (apply concat))
@@ -165,9 +132,7 @@
           buffers (dodecahedron-buffers 1)
           perspective-matrix (mat/perspective 45 (/ 640.0 480) 0.1 100.0)
           mv-matrix (-> (mat/matrix44)
-                        (geom/translate [0 0 translate-z])
-                        (geom/rotate-x rot-x)
-                        (geom/rotate-y rot-y))
+                        (geom/translate [0 0 -6]))
           program-data (get-program-data
                          perspective-matrix
                          mv-matrix
